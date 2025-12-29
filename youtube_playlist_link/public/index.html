@@ -209,4 +209,201 @@
             } catch (e) { alert('불러오기 실패: ' + e.message); }
         }
 
-        document
+        document.getElementById('addChannelBtn').onclick = async () => {
+            const input = document.getElementById('channelInput');
+            let rawInput = input.value.trim();
+            if (!rawInput) return;
+            try { rawInput = decodeURIComponent(rawInput); } catch (e) {}
+
+            let apiUrl = '';
+            const videoMatch = rawInput.match(/(?:v=|\/embed\/|youtu\.be\/)([^&?#/]+)/);
+            const handleMatch = rawInput.match(/(@[^\/\s?]+)/);
+
+            if (videoMatch) apiUrl = `${API_SERVER_URL}/api/find-channel-by-video?videoId=${videoMatch[1]}`;
+            else if (handleMatch) apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(handleMatch[1])}`;
+            else apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(rawInput)}`;
+            
+            try {
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                if (myChannels.some(c => c.channelId === data.channelId)) return alert('이미 추가됨');
+                
+                data.videos = []; 
+                myChannels.push(data);
+                saveAndRender();
+                input.value = '';
+                loadVideos(data.channelId, data.title.replace(/'/g, "\\'"));
+            } catch (e) { alert(e.message); }
+        };
+
+        function renderChannelList() {
+            const wrapper = document.getElementById('channelListWrapper');
+            wrapper.innerHTML = myChannels.map((c, i) => `
+                <div class="channel-item ${activeChannelId === c.channelId ? 'active' : ''}" onclick="loadVideos('${c.channelId}', '${c.title.replace(/'/g, "\\'")}')">
+                    <div class="channel-header">
+                        <img src="${c.thumbnail}" class="channel-icon">
+                        <span class="channel-name">${c.title} <span class="video-count-badge">(${c.videoCount || 0})</span></span>
+                        <i class="fas fa-times" style="color:#555; padding:5px;" onclick="removeChannel(event, ${i})"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadVideos(channelId, title, forceRefresh = false) {
+            const channel = myChannels.find(c => c.channelId === channelId);
+            if (!forceRefresh && activeChannelId === channelId && channel.videos && channel.videos.length > 0) return;
+
+            activeChannelId = channelId;
+            loadingChannelId = channelId; 
+            copyIndex = 0; 
+            renderChannelList();
+
+            document.getElementById('currentTitle').textContent = title;
+            document.getElementById('headerActions').style.display = 'flex';
+            document.getElementById('mainClearBtn').style.display = 'inline';
+
+            if (!forceRefresh && channel.videos && channel.videos.length > 0) {
+                currentVideoList = channel.videos;
+                applySortAndRender();
+                return;
+            }
+
+            currentVideoList = [];
+            updateCopyButtonLabel();
+            const container = document.getElementById('videoListContainer');
+            container.innerHTML = '<div class="empty-state"><div class="spinner"></div><p id="pText">데이터를 불러오는 중...</p></div>';
+            
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+
+            let nextPageToken = '';
+            try {
+                while (nextPageToken !== null) {
+                    if (loadingChannelId !== channelId) return;
+                    const res = await fetch(`${API_SERVER_URL}/api/channel-videos?channelId=${channelId}&pageToken=${nextPageToken}`);
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error);
+
+                    currentVideoList = currentVideoList.concat(data.videos);
+                    nextPageToken = data.nextPageToken || null;
+
+                    const percent = data.totalCount > 0 ? Math.round((currentVideoList.length / data.totalCount) * 100) : 0;
+                    progressBar.style.width = Math.min(percent, 100) + '%';
+                    const info = document.getElementById('pText');
+                    if(info) info.innerText = `로드 중... (${currentVideoList.length} / ${data.totalCount}) - ${Math.min(percent, 100)}%`;
+                    updateCopyButtonLabel();
+                }
+
+                channel.videos = currentVideoList;
+                saveToStorage();
+                progressContainer.style.display = 'none';
+                applySortAndRender();
+            } catch (e) {
+                container.innerHTML = `<div class="empty-state"><p style="color:var(--danger-color)">로딩 오류: ${e.message}</p></div>`;
+                progressContainer.style.display = 'none';
+            }
+        }
+
+        function refreshCurrentChannel() {
+            if (activeChannelId) {
+                const channel = myChannels.find(c => c.channelId === activeChannelId);
+                loadVideos(activeChannelId, channel.title, true);
+            }
+        }
+
+        function copyNextLink() {
+            if (!currentVideoList || currentVideoList.length === 0) return alert('복사할 영상이 없습니다.');
+            if (copyIndex >= currentVideoList.length) {
+                if (confirm('모든 링크를 복사했습니다. 처음부터 다시 시작할까요?')) {
+                    copyIndex = 0;
+                    updateCopyButtonLabel();
+                }
+                return;
+            }
+            const video = currentVideoList[copyIndex];
+            const link = `https://www.youtube.com/watch?v=${video.id}`;
+            navigator.clipboard.writeText(link).then(() => {
+                copyIndex++;
+                updateCopyButtonLabel();
+            }).catch(err => alert('복사 실패'));
+        }
+
+        function updateCopyButtonLabel() {
+            const btn = document.getElementById('copyBtn');
+            const total = currentVideoList.length;
+            if (total > 0) {
+                btn.innerHTML = `<i class="fas fa-copy"></i> Copy ${copyIndex + 1} / ${total}`;
+                btn.classList.toggle('primary', copyIndex >= total);
+                btn.classList.toggle('success', copyIndex < total);
+                if(copyIndex >= total) btn.innerHTML = `<i class="fas fa-check"></i> All ${total} Copied`;
+            } else btn.innerHTML = `<i class="fas fa-copy"></i> NotebookLM (Empty)`;
+        }
+
+        function openChannelVideosInNewTab() {
+            if (activeChannelId) window.open(`https://www.youtube.com/channel/${activeChannelId}/videos`, '_blank');
+        }
+
+        function changeSort(order) {
+            currentSort = order;
+            copyIndex = 0;
+            applySortAndRender();
+        }
+
+        // 썸네일 위에 인덱스/전체 갯수 배지 렌더링 (수정됨)
+        function applySortAndRender() {
+            if (!currentVideoList.length) return;
+            document.getElementById('sortAsc').classList.toggle('active', currentSort === 'asc');
+            document.getElementById('sortDesc').classList.toggle('active', currentSort === 'desc');
+            
+            // 데이터 정렬
+            currentVideoList.sort((a, b) => {
+                const dateA = new Date(a.publishedAt);
+                const dateB = new Date(b.publishedAt);
+                return currentSort === 'asc' ? dateA - dateB : dateB - dateA;
+            });
+            
+            updateCopyButtonLabel();
+            
+            const container = document.getElementById('videoListContainer');
+            const totalCount = currentVideoList.length;
+
+            container.innerHTML = currentVideoList.map((v, index) => `
+                <div class="video-card" onclick="openPlayer('${v.id}')">
+                    <div class="video-thumb-wrapper">
+                        <div class="video-index-badge">${index + 1} / ${totalCount}</div>
+                        <img src="${v.thumbnail}" class="video-thumb">
+                    </div>
+                    <div class="video-details">
+                        <div class="video-title">${v.title}</div>
+                        <div class="video-meta">📅 ${v.publishedAt.split('T')[0]} • ⏱ ${formatDuration(v.duration)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearMainArea() {
+            activeChannelId = null;
+            loadingChannelId = null;
+            currentVideoList = [];
+            copyIndex = 0;
+            updateCopyButtonLabel();
+            renderChannelList();
+            document.getElementById('currentTitle').textContent = 'Select Channel';
+            document.getElementById('headerActions').style.display = 'none';
+            document.getElementById('mainClearBtn').style.display = 'none';
+            document.getElementById('videoListContainer').innerHTML = `<div class="empty-state"><i class="fab fa-youtube" style="font-size:3rem"></i><p>채널을 선택하세요.</p></div>`;
+            document.getElementById('progressContainer').style.display = 'none';
+        }
+
+        function saveToStorage() { localStorage.setItem('myVideos', JSON.stringify(myChannels)); }
+        function saveAndRender() { saveToStorage(); renderChannelList(); }
+        function openPlayer(id) { document.getElementById('playerModal').classList.add('active'); document.getElementById('youtubePlayer').src = `https://www.youtube.com/embed/${id}?autoplay=1`; }
+        function closePlayer() { document.getElementById('playerModal').classList.remove('active'); document.getElementById('youtubePlayer').src = ''; }
+        function removeChannel(e, i) { e.stopPropagation(); if (confirm('삭제하시겠습니까?')) { if(myChannels[i].channelId === activeChannelId) clearMainArea(); myChannels.splice(i, 1); saveAndRender(); } }
+        function formatDuration(pt) { if(!pt) return "0:00"; const m = pt.match(/PT(\d+H)?(\d+M)?(\d+S)?/); if(!m) return "0:00"; const h = parseInt(m[1]) || 0; const min = parseInt(m[2]) || 0; const sec = parseInt(m[3]) || 0; return `${h > 0 ? h + ':' : ''}${h > 0 ? String(min).padStart(2, '0') : min}:${String(sec).padStart(2, '0')}`; }
+    </script>
+</body>
+</html>
