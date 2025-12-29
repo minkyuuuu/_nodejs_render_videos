@@ -63,28 +63,26 @@
 
         .video-list-container { flex: 1; overflow-y: auto; padding: 30px; }
         
-        /* [수정] 카드 레이아웃 */
+        /* [수정 1] 카드 레이아웃: 상단 여백을 줄여 전체 덩어리를 위로 올림 */
         .video-card { 
             display: flex; 
-            align-items: center;  /* 텍스트 수직 중앙 정렬 (원래대로 복구) */
+            align-items: center; 
             background: #2d2d2d; 
             border-radius: 6px; 
-            padding: 12px; 
-            padding-top: 25px;    /* 배지가 위로 튀어나오므로 상단 여백 추가 */
+            /* 상단 여백 25px -> 18px로 축소 (중앙 정렬 개선) */
+            padding: 18px 12px 12px 12px; 
             margin-bottom: 15px; 
             cursor: pointer; 
             border: 1px solid transparent; 
         }
         .video-card:hover { background: #333333; border-color: #555; }
         
-        /* [수정] 썸네일 래퍼 (position relative 설정) */
         .video-thumb-wrapper {
-            position: relative; /* 배지의 기준점 */
+            position: relative;
             margin-right: 20px;
             flex-shrink: 0;
         }
         
-        /* 썸네일 스타일 */
         .video-thumb { 
             width: 160px; height: 90px; 
             border-radius: 4px; 
@@ -93,26 +91,25 @@
             display: block; 
         }
         
-        /* [수정] 순서/갯수 배지 스타일 (아이콘 위쪽, 좌측 정렬) */
+        /* [수정 2] 배지 위치: 간격 50% 축소 및 좌측 정렬 */
         .video-index-badge {
             position: absolute;
-            top: -22px;       /* 아이콘 바로 위쪽 바깥 공간 */
-            left: 0;          /* 아이콘 왼쪽 라인과 일치 */
+            /* 아이콘 위쪽으로 18px 이동 (기존 -22px에서 축소) */
+            top: -18px;       
+            left: 0;          /* 좌측 라인 일치 */
             
-            /* 스타일링 */
             color: var(--accent-color);
             font-size: 0.75rem;
             font-weight: 600;
+            pointer-events: none;
             white-space: nowrap;
-            /* 배경색 제거하여 텍스트만 깔끔하게 표시 (원하면 배경 추가 가능) */
-            /* text-shadow: 1px 1px 2px rgba(0,0,0,0.8); 가독성 확보 */
+            z-index: 2;
         }
 
         .video-details { flex: 1; display: flex; flex-direction: column; justify-content: center; }
         .video-title { font-size: 0.95rem; margin-bottom: 8px; color: var(--text-highlight); line-height: 1.4; }
         .video-meta { font-size: 0.8rem; color: #888; }
 
-        /* 모달 및 기타 스타일 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal-overlay.active { display: flex; }
         .player-wrapper { display: flex; align-items: flex-start; gap: 15px; width: 90%; max-width: 1200px; }
@@ -352,13 +349,11 @@
             applySortAndRender();
         }
 
-        // 썸네일 위에 인덱스/전체 갯수 배지 렌더링 (수정됨)
         function applySortAndRender() {
             if (!currentVideoList.length) return;
             document.getElementById('sortAsc').classList.toggle('active', currentSort === 'asc');
             document.getElementById('sortDesc').classList.toggle('active', currentSort === 'desc');
             
-            // 데이터 정렬
             currentVideoList.sort((a, b) => {
                 const dateA = new Date(a.publishedAt);
                 const dateB = new Date(b.publishedAt);
