@@ -38,10 +38,19 @@
         /* [수정 3] 좌측 채널 목록 하단 여백 추가 (스크롤 짤림 방지) - padding-bottom을 150px로 늘림 */
         .channel-list { flex: 1; overflow-y: auto; padding: 10px 0 150px 0; }
         
-        .channel-item { cursor: pointer; transition: background 0.1s; border-left: 3px solid transparent; }
+        /* [수정 4] 드래그 관련 스타일 추가 */
+        .channel-item { cursor: pointer; transition: background 0.1s, border-color 0.2s; border-left: 3px solid transparent; }
         .channel-item.active { background: var(--item-active); border-left-color: var(--accent-color); }
+        .channel-item.dragging { opacity: 0.5; background: #333; } /* 드래그 중인 아이템 스타일 */
+        .channel-item.drag-over { border-top: 2px solid var(--accent-color); } /* 드래그 대상 위치 표시 */
+
         .channel-header { display: flex; align-items: center; padding: 12px 15px; }
         .channel-header:hover { background: var(--item-hover); }
+        
+        /* 햄버거 핸들 스타일 */
+        .drag-handle { color: #555; margin-right: 10px; cursor: grab; font-size: 0.9rem; padding: 2px; }
+        .drag-handle:hover { color: #999; }
+
         .channel-icon { width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover; border: 1px solid #444; }
         .channel-name { flex: 1; font-size: 0.95rem; color: var(--text-highlight); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .video-count-badge { font-size: 0.8rem; color: #888; margin-left: 5px; }
@@ -180,6 +189,7 @@
         let loadingChannelId = null; 
         let currentSort = 'asc';
         let copyIndex = 0;
+        let dragSrcEl = null; // 드래그 앤 드롭을 위한 변수
 
         window.onload = renderChannelList;
 
@@ -239,14 +249,70 @@
         function renderChannelList() {
             const wrapper = document.getElementById('channelListWrapper');
             wrapper.innerHTML = myChannels.map((c, i) => `
-                <div class="channel-item ${activeChannelId === c.channelId ? 'active' : ''}" onclick="loadVideos('${c.channelId}', '${c.title.replace(/'/g, "\\'")}')">
+                <div class="channel-item ${activeChannelId === c.channelId ? 'active' : ''}" 
+                     draggable="true" 
+                     data-index="${i}"
+                     ondragstart="handleDragStart(event)" 
+                     ondragover="handleDragOver(event)" 
+                     ondragenter="handleDragEnter(event)" 
+                     ondragleave="handleDragLeave(event)" 
+                     ondrop="handleDrop(event)" 
+                     ondragend="handleDragEnd(event)"
+                     onclick="loadVideos('${c.channelId}', '${c.title.replace(/'/g, "\\'")}')">
                     <div class="channel-header">
+                        <i class="fas fa-bars drag-handle" title="Drag to reorder"></i>
                         <img src="${c.thumbnail}" class="channel-icon">
                         <span class="channel-name">${c.title} <span class="video-count-badge">(${c.videoCount || 0})</span></span>
                         <i class="fas fa-times" style="color:#555; padding:5px;" onclick="removeChannel(event, ${i})"></i>
                     </div>
                 </div>
             `).join('');
+        }
+
+        // [드래그 앤 드롭 핸들러]
+        function handleDragStart(e) {
+            dragSrcEl = e.currentTarget;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
+            e.currentTarget.classList.add('dragging');
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) e.stopPropagation();
+            
+            const target = e.currentTarget;
+            if (dragSrcEl !== target) {
+                const oldIndex = parseInt(dragSrcEl.getAttribute('data-index'));
+                const newIndex = parseInt(target.getAttribute('data-index'));
+                
+                // 배열 순서 변경
+                const item = myChannels[oldIndex];
+                myChannels.splice(oldIndex, 1);
+                myChannels.splice(newIndex, 0, item);
+                
+                saveAndRender();
+            }
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            const items = document.querySelectorAll('.channel-item');
+            items.forEach(item => item.classList.remove('drag-over'));
         }
 
         async function loadVideos(channelId, title, forceRefresh = false) {
