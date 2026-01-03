@@ -58,26 +58,41 @@
         /* 메인 컨텐츠 스타일 */
         .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-color); }
         
-        /* [수정 7] 헤더 스타일 변경: border-bottom 제거 및 패딩 조정 (URL바와 연결감 위해) */
+        /* [수정 8] 헤더 스타일 재조정: 컴팩트한 높이 유지 */
         .main-header { 
-            padding: 20px 30px 5px 30px; /* 하단 패딩 줄임 */
-            /* border-bottom: 1px solid var(--border-color);  제거 -> URL바 아래로 이동 */
+            padding: 12px 30px; /* 패딩을 줄여 전체 높이 축소 (기존 20px -> 12px) */
+            border-bottom: 1px solid var(--border-color); /* 구분선 복구 */
             display: flex; 
             justify-content: space-between; 
-            align-items: center; 
+            align-items: center; /* 버튼들과 수직 중앙 정렬 */
+            min-height: 70px; /* 최소 높이 설정 */
         }
-        .header-title-wrapper { display: flex; align-items: center; gap: 15px; }
+        .header-title-wrapper { display: flex; align-items: center; gap: 15px; flex: 1; overflow: hidden; }
         
-        /* [수정 7] h1 스타일 원상복구 및 URL 바 스타일 추가 */
-        .main-header h1 { font-size: 1.3rem; color: var(--text-highlight); font-weight: normal; margin: 0; }
+        /* [수정 8] 타이틀과 URL을 묶는 컨테이너 */
+        .title-text-group {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .main-header h1 { 
+            font-size: 1.3rem; 
+            color: var(--text-highlight); 
+            font-weight: normal; 
+            margin: 0; 
+            line-height: 1.2; 
+        }
         
-        /* 새로운 URL 표시 영역 스타일 */
-        .channel-url-bar {
-            padding: 0 30px 20px 30px; /* 상단 패딩 0, 하단 패딩 20px */
-            border-bottom: 1px solid var(--border-color); /* 구분선 여기로 이동 */
-            font-size: 0.65rem; /* 유튜버 폰트(1.3rem)의 1/2 크기 */
+        /* [수정 8] URL 정보 스타일: 타이틀 바로 아래 공백에 위치 */
+        .channel-url-info {
+            font-size: 0.7rem; /* 타이틀의 약 1/2 크기 */
             color: #888;
-            line-height: 1;
+            line-height: 1.2;
+            margin-top: 2px; /* 타이틀과의 간격 최소화 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .header-actions { display: none; gap: 10px; align-items: center; }
@@ -173,10 +188,14 @@
     <main class="main-content">
         <div id="progressContainer"><div id="progressBar"></div></div>
         
-        <!-- [수정 7] 상단 헤더 영역 (타이틀과 버튼들) -->
+        <!-- [수정 8] 헤더 구조 통합 (단일 행으로 복구) -->
         <div class="main-header">
             <div class="header-title-wrapper">
-                <h1 id="currentTitle">Select Channel</h1>
+                <div class="title-text-group">
+                    <h1 id="currentTitle">Select Channel</h1>
+                    <!-- 타이틀 바로 아래 URL 정보 표시 -->
+                    <div id="channelUrl" class="channel-url-info"></div>
+                </div>
                 <i class="fas fa-times" id="mainClearBtn" style="display:none; cursor:pointer; color:#666;" onclick="clearMainArea()" title="비우기"></i>
             </div>
             <div class="header-actions" id="headerActions">
@@ -188,9 +207,6 @@
                 <button class="header-btn success" id="copyBtn" onclick="copyNextLink()" title="순차적 링크 복사"><i class="fas fa-copy"></i> NotebookLM (Ready)</button>
             </div>
         </div>
-        
-        <!-- [수정 7] 헤더 하단에 별도의 URL 표시줄 추가 (전체 행 사용) -->
-        <div id="channelUrl" class="channel-url-bar"></div>
 
         <div class="video-list-container" id="videoListContainer">
             <div class="empty-state">
