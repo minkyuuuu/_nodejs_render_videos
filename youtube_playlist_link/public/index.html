@@ -267,12 +267,23 @@
             try { rawInput = decodeURIComponent(rawInput); } catch (e) {}
 
             let apiUrl = '';
+            // [수정 9] 방어 코드 적용: 엄격한 정규식 패턴 검사
             const videoMatch = rawInput.match(/(?:v=|\/embed\/|youtu\.be\/)([^&?#/]+)/);
             const handleMatch = rawInput.match(/(@[^\/\s?]+)/);
+            // 채널 ID (UC로 시작하고 24자) 또는 전체 채널 URL
+            const channelIdMatch = rawInput.match(/(?:channel\/|^)(UC[\w-]{21}[AQgw])/);
 
-            if (videoMatch) apiUrl = `${API_SERVER_URL}/api/find-channel-by-video?videoId=${videoMatch[1]}`;
-            else if (handleMatch) apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(handleMatch[1])}`;
-            else apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(rawInput)}`;
+            if (videoMatch) {
+                apiUrl = `${API_SERVER_URL}/api/find-channel-by-video?videoId=${videoMatch[1]}`;
+            } else if (handleMatch) {
+                apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(handleMatch[1])}`;
+            } else if (channelIdMatch) {
+                apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(channelIdMatch[1])}`;
+            } else {
+                // [방어 코드] 아무런 패턴에도 맞지 않으면 에러 팝업 후 중단
+                alert("입력하신 정보가 올바른 유튜브 주소 형식이 아닙니다.\n채널 URL, 핸들(@), 또는 동영상 주소를 정확히 입력해주세요.");
+                return;
+            }
             
             try {
                 const res = await fetch(apiUrl);
@@ -369,7 +380,7 @@
             document.getElementById('currentTitle').textContent = title;
             // [수정 6] 채널 URL 정보 표시 로직 추가 (위치: 헤더 하단)
             const channelUrlDiv = document.getElementById('channelUrl');
-            const handleText = channel.handle ? `https://www.youtube.com/${channel.handle}` : `https://www.youtube.com/channel/${channelId}`;
+            const handleText = (channel.handle ? `https://www.youtube.com/${channel.handle}` : `https://www.youtube.com/channel/${channelId}`) + '/videos';
             channelUrlDiv.textContent = handleText;
 
             document.getElementById('headerActions').style.display = 'flex';
