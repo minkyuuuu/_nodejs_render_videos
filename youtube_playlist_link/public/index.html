@@ -59,7 +59,11 @@
         .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-color); }
         .main-header { padding: 20px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .header-title-wrapper { display: flex; align-items: center; gap: 15px; }
-        .main-header h1 { font-size: 1.3rem; color: var(--text-highlight); font-weight: normal; }
+        /* [수정 6] 타이틀과 URL을 감싸는 컨테이너 및 폰트 스타일 */
+        .title-info-container { display: flex; flex-direction: column; justify-content: center; }
+        .main-header h1 { font-size: 1.3rem; color: var(--text-highlight); font-weight: normal; line-height: 1.2; margin-bottom: 2px; }
+        .channel-url-info { font-size: 0.65rem; color: #888; line-height: 1; }
+
         .header-actions { display: none; gap: 10px; align-items: center; }
         .header-btn { padding: 6px 15px; border: 1px solid #444; background: #252526; color: #ccc; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; white-space: nowrap; }
         .header-btn:hover { background: #3e3e42; color: #fff; }
@@ -154,7 +158,11 @@
         <div id="progressContainer"><div id="progressBar"></div></div>
         <div class="main-header">
             <div class="header-title-wrapper">
-                <h1 id="currentTitle">Select Channel</h1>
+                <!-- [수정 6] 타이틀과 URL 표시 영역 그룹화 -->
+                <div class="title-info-container">
+                    <h1 id="currentTitle">Select Channel</h1>
+                    <div id="channelUrl" class="channel-url-info"></div>
+                </div>
                 <i class="fas fa-times" id="mainClearBtn" style="display:none; cursor:pointer; color:#666;" onclick="clearMainArea()" title="비우기"></i>
             </div>
             <div class="header-actions" id="headerActions">
@@ -325,6 +333,11 @@
             renderChannelList();
 
             document.getElementById('currentTitle').textContent = title;
+            // [수정 6] 채널 URL 정보 표시 로직 추가
+            const channelUrlDiv = document.getElementById('channelUrl');
+            const handleText = channel.handle ? `https://www.youtube.com/${channel.handle}` : `https://www.youtube.com/channel/${channelId}`;
+            channelUrlDiv.textContent = handleText;
+
             document.getElementById('headerActions').style.display = 'flex';
             document.getElementById('mainClearBtn').style.display = 'inline';
 
@@ -456,6 +469,7 @@
             updateCopyButtonLabel();
             renderChannelList();
             document.getElementById('currentTitle').textContent = 'Select Channel';
+            document.getElementById('channelUrl').textContent = ''; // [수정 6] URL 초기화
             document.getElementById('headerActions').style.display = 'none';
             document.getElementById('mainClearBtn').style.display = 'none';
             document.getElementById('videoListContainer').innerHTML = `<div class="empty-state"><i class="fab fa-youtube" style="font-size:3rem"></i><p>채널을 선택하세요.</p></div>`;
