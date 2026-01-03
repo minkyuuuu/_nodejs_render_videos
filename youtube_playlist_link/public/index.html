@@ -136,6 +136,7 @@
             border-radius: 6px; 
             /* 상단 여백 25px -> 18px로 축소 (중앙 정렬 개선) */
             padding: 18px 12px 12px 12px; 
+            /* [수정 11] 사용자 요청 반영: margin-bottom 15px -> 16px */
             margin-bottom: 16px; 
             cursor: pointer; 
             border: 1px solid transparent; 
@@ -159,7 +160,7 @@
         /* [수정 2] 배지 위치: 간격 50% 축소 및 좌측 정렬 */
         .video-index-badge {
             position: absolute;
-            /* 아이콘 위쪽으로 18px 이동 (기존 -22px에서 축소) */
+            /* [수정 11] 사용자 요청 반영: top -18px -> -16px */
             top: -16px;       
             left: 0;          /* 좌측 라인 일치 */
             
@@ -400,7 +401,9 @@
             // [수정 6] 채널 URL 정보 표시 로직 추가 (위치: 헤더 하단)
             const channelUrlDiv = document.getElementById('channelUrl');
             const handleText = (channel.handle ? `https://www.youtube.com/${channel.handle}` : `https://www.youtube.com/channel/${channelId}`) + '/videos';
-            channelUrlDiv.textContent = handleText;
+            
+            // [수정 12] 채널 ID 정보 추가 (핸들 아래에 표시)
+            channelUrlDiv.innerHTML = `${handleText}<br><span style="color:#666; font-size:0.65rem;">ID: ${channelId}</span>`;
 
             document.getElementById('headerActions').style.display = 'flex';
             document.getElementById('mainClearBtn').style.display = 'inline';
