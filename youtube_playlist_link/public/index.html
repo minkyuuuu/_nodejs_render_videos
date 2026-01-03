@@ -441,7 +441,8 @@
                     </div>
                     <div class="video-details">
                         <div class="video-title">${v.title}</div>
-                        <div class="video-meta">📅 ${v.publishedAt.split('T')[0]} • ⏱ ${formatDuration(v.duration)}</div>
+                        <!-- [수정 5] 업로드 시간 표시 추가: formatDateTime 함수 사용 -->
+                        <div class="video-meta">📅 ${formatDateTime(v.publishedAt)} • ⏱ ${formatDuration(v.duration)}</div>
                     </div>
                 </div>
             `).join('');
@@ -467,6 +468,17 @@
         function closePlayer() { document.getElementById('playerModal').classList.remove('active'); document.getElementById('youtubePlayer').src = ''; }
         function removeChannel(e, i) { e.stopPropagation(); if (confirm('삭제하시겠습니까?')) { if(myChannels[i].channelId === activeChannelId) clearMainArea(); myChannels.splice(i, 1); saveAndRender(); } }
         function formatDuration(pt) { if(!pt) return "0:00"; const m = pt.match(/PT(\d+H)?(\d+M)?(\d+S)?/); if(!m) return "0:00"; const h = parseInt(m[1]) || 0; const min = parseInt(m[2]) || 0; const sec = parseInt(m[3]) || 0; return `${h > 0 ? h + ':' : ''}${h > 0 ? String(min).padStart(2, '0') : min}:${String(sec).padStart(2, '0')}`; }
+
+        // [수정 5] 날짜 및 시간 포맷팅 함수 (YYYY-MM-DD HH:mm)
+        function formatDateTime(isoString) {
+            const d = new Date(isoString);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hour = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hour}:${min}`;
+        }
     </script>
 </body>
 </html>
