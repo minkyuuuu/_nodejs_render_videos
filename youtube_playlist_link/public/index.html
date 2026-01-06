@@ -21,27 +21,20 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        /* [수정 10] iPad/모바일 레이아웃 대응 CSS 수정 */
         body { 
             font-family: 'Malgun Gothic', sans-serif; 
             background: var(--bg-color); 
             color: var(--text-color); 
-            
-            /* 높이 설정: 모바일 브라우저 주소창 대응 */
-            height: 100vh; /* 구형 브라우저용 Fallback */
-            height: 100dvh; /* Dynamic Viewport Height: 주소창 변화에 반응 */
-            
+            height: 100vh; 
+            height: 100dvh; 
             display: flex; 
             overflow: hidden; 
-            
-            /* iPad/iPhone 노치 및 상태표시줄 안전 영역 확보 */
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
         }
         
-        /* 사이드바 스타일 */
         .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 20px; background: var(--header-bg); border-bottom: 1px solid var(--border-color); }
         .sidebar-header h2 { font-size: 1.1rem; margin-bottom: 15px; color: var(--accent-color); display: flex; align-items: center; gap: 8px; }
@@ -54,19 +47,16 @@
         .add-channel-box input { flex: 1; padding: 8px; background: #3c3c3c; border: 1px solid #3c3c3c; color: white; border-radius: 4px; outline: none; }
         .add-channel-box button { padding: 8px 12px; background: #0e639c; border: none; color: white; border-radius: 4px; cursor: pointer; }
 
-        /* [수정 3] 좌측 채널 목록 하단 여백 추가 (스크롤 짤림 방지) - padding-bottom을 150px로 늘림 */
         .channel-list { flex: 1; overflow-y: auto; padding: 10px 0 150px 0; }
         
-        /* [수정 4] 드래그 관련 스타일 추가 */
         .channel-item { cursor: pointer; transition: background 0.1s, border-color 0.2s; border-left: 3px solid transparent; }
         .channel-item.active { background: var(--item-active); border-left-color: var(--accent-color); }
-        .channel-item.dragging { opacity: 0.5; background: #333; } /* 드래그 중인 아이템 스타일 */
-        .channel-item.drag-over { border-top: 2px solid var(--accent-color); } /* 드래그 대상 위치 표시 */
+        .channel-item.dragging { opacity: 0.5; background: #333; } 
+        .channel-item.drag-over { border-top: 2px solid var(--accent-color); }
 
         .channel-header { display: flex; align-items: center; padding: 12px 15px; }
         .channel-header:hover { background: var(--item-hover); }
         
-        /* 햄버거 핸들 스타일 */
         .drag-handle { color: #555; margin-right: 10px; cursor: grab; font-size: 0.9rem; padding: 2px; }
         .drag-handle:hover { color: #999; }
 
@@ -74,45 +64,21 @@
         .channel-name { flex: 1; font-size: 0.95rem; color: var(--text-highlight); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .video-count-badge { font-size: 0.8rem; color: #888; margin-left: 5px; }
 
-        /* 메인 컨텐츠 스타일 */
         .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-color); }
         
-        /* [수정 8] 헤더 스타일 재조정: 컴팩트한 높이 유지 */
         .main-header { 
-            padding: 12px 30px; /* 패딩을 줄여 전체 높이 축소 (기존 20px -> 12px) */
-            border-bottom: 1px solid var(--border-color); /* 구분선 복구 */
+            padding: 12px 30px; 
+            border-bottom: 1px solid var(--border-color); 
             display: flex; 
             justify-content: space-between; 
-            align-items: center; /* 버튼들과 수직 중앙 정렬 */
-            min-height: 70px; /* 최소 높이 설정 */
+            align-items: center; 
+            min-height: 70px; 
         }
         .header-title-wrapper { display: flex; align-items: center; gap: 15px; flex: 1; overflow: hidden; }
         
-        /* [수정 8] 타이틀과 URL을 묶는 컨테이너 */
-        .title-text-group {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .main-header h1 { 
-            font-size: 1.3rem; 
-            color: var(--text-highlight); 
-            font-weight: normal; 
-            margin: 0; 
-            line-height: 1.2; 
-        }
-        
-        /* [수정 8] URL 정보 스타일: 타이틀 바로 아래 공백에 위치 */
-        .channel-url-info {
-            font-size: 0.7rem; /* 타이틀의 약 1/2 크기 */
-            color: #888;
-            line-height: 1.2;
-            margin-top: 2px; /* 타이틀과의 간격 최소화 */
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .title-text-group { display: flex; flex-direction: column; justify-content: center; }
+        .main-header h1 { font-size: 1.3rem; color: var(--text-highlight); font-weight: normal; margin: 0; line-height: 1.2; }
+        .channel-url-info { font-size: 0.7rem; color: #888; line-height: 1.2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .header-actions { display: none; gap: 10px; align-items: center; }
         .header-btn { padding: 6px 15px; border: 1px solid #444; background: #252526; color: #ccc; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; white-space: nowrap; }
@@ -128,49 +94,12 @@
 
         .video-list-container { flex: 1; overflow-y: auto; padding: 30px; }
         
-        /* [수정 1] 카드 레이아웃: 상단 여백을 줄여 전체 덩어리를 위로 올림 */
-        .video-card { 
-            display: flex; 
-            align-items: center; 
-            background: #2d2d2d; 
-            border-radius: 6px; 
-            /* 상단 여백 25px -> 18px로 축소 (중앙 정렬 개선) */
-            padding: 18px 12px 12px 12px; 
-            /* [수정 11] 사용자 요청 반영: margin-bottom 15px -> 16px */
-            margin-bottom: 16px; 
-            cursor: pointer; 
-            border: 1px solid transparent; 
-        }
+        .video-card { display: flex; align-items: center; background: #2d2d2d; border-radius: 6px; padding: 18px 12px 12px 12px; margin-bottom: 16px; cursor: pointer; border: 1px solid transparent; }
         .video-card:hover { background: #333333; border-color: #555; }
         
-        .video-thumb-wrapper {
-            position: relative;
-            margin-right: 20px;
-            flex-shrink: 0;
-        }
-        
-        .video-thumb { 
-            width: 160px; height: 90px; 
-            border-radius: 4px; 
-            object-fit: cover; 
-            background: #000;
-            display: block; 
-        }
-        
-        /* [수정 2] 배지 위치: 간격 50% 축소 및 좌측 정렬 */
-        .video-index-badge {
-            position: absolute;
-            /* [수정 11] 사용자 요청 반영: top -18px -> -16px */
-            top: -16px;       
-            left: 0;          /* 좌측 라인 일치 */
-            
-            color: var(--accent-color);
-            font-size: 0.75rem;
-            font-weight: 600;
-            pointer-events: none;
-            white-space: nowrap;
-            z-index: 2;
-        }
+        .video-thumb-wrapper { position: relative; margin-right: 20px; flex-shrink: 0; }
+        .video-thumb { width: 160px; height: 90px; border-radius: 4px; object-fit: cover; background: #000; display: block; }
+        .video-index-badge { position: absolute; top: -16px; left: 0; color: var(--accent-color); font-size: 0.75rem; font-weight: 600; pointer-events: none; white-space: nowrap; z-index: 2; }
 
         .video-details { flex: 1; display: flex; flex-direction: column; justify-content: center; }
         .video-title { font-size: 0.95rem; margin-bottom: 8px; color: var(--text-highlight); line-height: 1.4; }
@@ -208,12 +137,10 @@
     <main class="main-content">
         <div id="progressContainer"><div id="progressBar"></div></div>
         
-        <!-- [수정 8] 헤더 구조 통합 (단일 행으로 복구) -->
         <div class="main-header">
             <div class="header-title-wrapper">
                 <div class="title-text-group">
                     <h1 id="currentTitle">Select Channel</h1>
-                    <!-- 타이틀 바로 아래 URL 정보 표시 -->
                     <div id="channelUrl" class="channel-url-info"></div>
                 </div>
                 <i class="fas fa-times" id="mainClearBtn" style="display:none; cursor:pointer; color:#666;" onclick="clearMainArea()" title="비우기"></i>
@@ -251,7 +178,7 @@
         let loadingChannelId = null; 
         let currentSort = 'asc';
         let copyIndex = 0;
-        let dragSrcEl = null; // 드래그 앤 드롭을 위한 변수
+        let dragSrcEl = null;
 
         window.onload = renderChannelList;
 
@@ -284,24 +211,27 @@
             const input = document.getElementById('channelInput');
             let rawInput = input.value.trim();
             if (!rawInput) return;
-            try { rawInput = decodeURIComponent(rawInput); } catch (e) {}
+
+            // [수정] 정확한 핸들 추출 로직 (하이픈, 점 포함 / 뒤에오는 경로는 제외)
+            let handle = "";
+            const handleMatch = rawInput.match(/@([\w.-]+)/);
+            if (handleMatch) {
+                handle = "@" + handleMatch[1];
+            }
 
             let apiUrl = '';
-            // [수정 9] 방어 코드 적용: 엄격한 정규식 패턴 검사
             const videoMatch = rawInput.match(/(?:v=|\/embed\/|youtu\.be\/)([^&?#/]+)/);
-            const handleMatch = rawInput.match(/(@[^\/\s?]+)/);
-            // 채널 ID (UC로 시작하고 24자) 또는 전체 채널 URL
             const channelIdMatch = rawInput.match(/(?:channel\/|^)(UC[\w-]{21}[AQgw])/);
 
             if (videoMatch) {
                 apiUrl = `${API_SERVER_URL}/api/find-channel-by-video?videoId=${videoMatch[1]}`;
-            } else if (handleMatch) {
-                apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(handleMatch[1])}`;
+            } else if (handle) {
+                // 정확히 추출된 핸들(@coin-rich 등)만 사용
+                apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(handle)}`;
             } else if (channelIdMatch) {
                 apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(channelIdMatch[1])}`;
             } else {
-                // [방어 코드] 아무런 패턴에도 맞지 않으면 에러 팝업 후 중단
-                alert("입력하신 정보가 올바른 유튜브 주소 형식이 아닙니다.\n채널 URL, 핸들(@), 또는 동영상 주소를 정확히 입력해주세요.");
+                alert("입력하신 정보가 올바른 형식의 핸들(@)이나 URL이 아닙니다.");
                 return;
             }
             
@@ -342,51 +272,23 @@
             `).join('');
         }
 
-        // [드래그 앤 드롭 핸들러]
-        function handleDragStart(e) {
-            dragSrcEl = e.currentTarget;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
-            e.currentTarget.classList.add('dragging');
-        }
-
-        function handleDragOver(e) {
-            if (e.preventDefault) e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
-
-        function handleDragEnter(e) {
-            e.currentTarget.classList.add('drag-over');
-        }
-
-        function handleDragLeave(e) {
-            e.currentTarget.classList.remove('drag-over');
-        }
-
+        function handleDragStart(e) { dragSrcEl = e.currentTarget; e.dataTransfer.effectAllowed = 'move'; e.currentTarget.classList.add('dragging'); }
+        function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); return false; }
+        function handleDragEnter(e) { e.currentTarget.classList.add('drag-over'); }
+        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
         function handleDrop(e) {
             if (e.stopPropagation) e.stopPropagation();
-            
             const target = e.currentTarget;
             if (dragSrcEl !== target) {
                 const oldIndex = parseInt(dragSrcEl.getAttribute('data-index'));
                 const newIndex = parseInt(target.getAttribute('data-index'));
-                
-                // 배열 순서 변경
-                const item = myChannels[oldIndex];
-                myChannels.splice(oldIndex, 1);
+                const item = myChannels.splice(oldIndex, 1)[0];
                 myChannels.splice(newIndex, 0, item);
-                
                 saveAndRender();
             }
             return false;
         }
-
-        function handleDragEnd(e) {
-            e.currentTarget.classList.remove('dragging');
-            const items = document.querySelectorAll('.channel-item');
-            items.forEach(item => item.classList.remove('drag-over'));
-        }
+        function handleDragEnd(e) { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.channel-item').forEach(item => item.classList.remove('drag-over')); }
 
         async function loadVideos(channelId, title, forceRefresh = false) {
             const channel = myChannels.find(c => c.channelId === channelId);
@@ -398,11 +300,8 @@
             renderChannelList();
 
             document.getElementById('currentTitle').textContent = title;
-            // [수정 6] 채널 URL 정보 표시 로직 추가 (위치: 헤더 하단)
             const channelUrlDiv = document.getElementById('channelUrl');
             const handleText = (channel.handle ? `https://www.youtube.com/${channel.handle}` : `https://www.youtube.com/channel/${channelId}`) + '/videos';
-            
-            // [수정 12] 채널 ID 정보 추가 (핸들 아래에 표시)
             channelUrlDiv.innerHTML = `${handleText}<br><span style="color:#666; font-size:0.65rem;">ID: ${channelId}</span>`;
 
             document.getElementById('headerActions').style.display = 'flex';
@@ -452,28 +351,16 @@
             }
         }
 
-        function refreshCurrentChannel() {
-            if (activeChannelId) {
-                const channel = myChannels.find(c => c.channelId === activeChannelId);
-                loadVideos(activeChannelId, channel.title, true);
-            }
-        }
-
+        function refreshCurrentChannel() { if (activeChannelId) { const channel = myChannels.find(c => c.channelId === activeChannelId); loadVideos(activeChannelId, channel.title, true); } }
         function copyNextLink() {
             if (!currentVideoList || currentVideoList.length === 0) return alert('복사할 영상이 없습니다.');
             if (copyIndex >= currentVideoList.length) {
-                if (confirm('모든 링크를 복사했습니다. 처음부터 다시 시작할까요?')) {
-                    copyIndex = 0;
-                    updateCopyButtonLabel();
-                }
+                if (confirm('모든 링크를 복사했습니다. 처음부터 다시 시작할까요?')) { copyIndex = 0; updateCopyButtonLabel(); }
                 return;
             }
             const video = currentVideoList[copyIndex];
             const link = `https://www.youtube.com/watch?v=${video.id}`;
-            navigator.clipboard.writeText(link).then(() => {
-                copyIndex++;
-                updateCopyButtonLabel();
-            }).catch(err => alert('복사 실패'));
+            navigator.clipboard.writeText(link).then(() => { copyIndex++; updateCopyButtonLabel(); }).catch(err => alert('복사 실패'));
         }
 
         function updateCopyButtonLabel() {
@@ -487,32 +374,17 @@
             } else btn.innerHTML = `<i class="fas fa-copy"></i> NotebookLM (Empty)`;
         }
 
-        function openChannelVideosInNewTab() {
-            if (activeChannelId) window.open(`https://www.youtube.com/channel/${activeChannelId}/videos`, '_blank');
-        }
-
-        function changeSort(order) {
-            currentSort = order;
-            copyIndex = 0;
-            applySortAndRender();
-        }
+        function openChannelVideosInNewTab() { if (activeChannelId) window.open(`https://www.youtube.com/channel/${activeChannelId}/videos`, '_blank'); }
+        function changeSort(order) { currentSort = order; copyIndex = 0; applySortAndRender(); }
 
         function applySortAndRender() {
             if (!currentVideoList.length) return;
             document.getElementById('sortAsc').classList.toggle('active', currentSort === 'asc');
             document.getElementById('sortDesc').classList.toggle('active', currentSort === 'desc');
-            
-            currentVideoList.sort((a, b) => {
-                const dateA = new Date(a.publishedAt);
-                const dateB = new Date(b.publishedAt);
-                return currentSort === 'asc' ? dateA - dateB : dateB - dateA;
-            });
-            
+            currentVideoList.sort((a, b) => { const dateA = new Date(a.publishedAt); const dateB = new Date(b.publishedAt); return currentSort === 'asc' ? dateA - dateB : dateB - dateA; });
             updateCopyButtonLabel();
-            
             const container = document.getElementById('videoListContainer');
             const totalCount = currentVideoList.length;
-
             container.innerHTML = currentVideoList.map((v, index) => `
                 <div class="video-card" onclick="openPlayer('${v.id}')">
                     <div class="video-thumb-wrapper">
@@ -521,7 +393,6 @@
                     </div>
                     <div class="video-details">
                         <div class="video-title">${v.title}</div>
-                        <!-- [수정 5] 업로드 시간 표시 추가: formatDateTime 함수 사용 -->
                         <div class="video-meta">📅 ${formatDateTime(v.publishedAt)} • ⏱ ${formatDuration(v.duration)}</div>
                     </div>
                 </div>
@@ -529,14 +400,9 @@
         }
 
         function clearMainArea() {
-            activeChannelId = null;
-            loadingChannelId = null;
-            currentVideoList = [];
-            copyIndex = 0;
-            updateCopyButtonLabel();
-            renderChannelList();
+            activeChannelId = null; loadingChannelId = null; currentVideoList = []; copyIndex = 0; updateCopyButtonLabel(); renderChannelList();
             document.getElementById('currentTitle').textContent = 'Select Channel';
-            document.getElementById('channelUrl').textContent = ''; // [수정 6] URL 초기화
+            document.getElementById('channelUrl').textContent = '';
             document.getElementById('headerActions').style.display = 'none';
             document.getElementById('mainClearBtn').style.display = 'none';
             document.getElementById('videoListContainer').innerHTML = `<div class="empty-state"><i class="fab fa-youtube" style="font-size:3rem"></i><p>채널을 선택하세요.</p></div>`;
@@ -549,8 +415,6 @@
         function closePlayer() { document.getElementById('playerModal').classList.remove('active'); document.getElementById('youtubePlayer').src = ''; }
         function removeChannel(e, i) { e.stopPropagation(); if (confirm('삭제하시겠습니까?')) { if(myChannels[i].channelId === activeChannelId) clearMainArea(); myChannels.splice(i, 1); saveAndRender(); } }
         function formatDuration(pt) { if(!pt) return "0:00"; const m = pt.match(/PT(\d+H)?(\d+M)?(\d+S)?/); if(!m) return "0:00"; const h = parseInt(m[1]) || 0; const min = parseInt(m[2]) || 0; const sec = parseInt(m[3]) || 0; return `${h > 0 ? h + ':' : ''}${h > 0 ? String(min).padStart(2, '0') : min}:${String(sec).padStart(2, '0')}`; }
-
-        // [수정 5] 날짜 및 시간 포맷팅 함수 (YYYY-MM-DD HH:mm)
         function formatDateTime(isoString) {
             const d = new Date(isoString);
             const year = d.getFullYear();
