@@ -6,128 +6,35 @@
     <title>My Video Library Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --bg-color: #1e1e1e;           
-            --sidebar-bg: #252526;         
-            --header-bg: #333333;          
-            --text-color: #cccccc;         
-            --text-highlight: #ffffff;     
-            --accent-color: #9cdcfe;       
-            --item-hover: #2a2d2e;         
-            --item-active: #37373d;        
-            --border-color: #3e3e42;       
-            --danger-color: #ff6b6b;
-            --sidebar-width: 350px;
-        }
+        :root { --bg-color: #1e1e1e; --sidebar-bg: #252526; --header-bg: #333333; --text-color: #cccccc; --text-highlight: #ffffff; --accent-color: #9cdcfe; --border-color: #3e3e42; --sidebar-width: 350px; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            font-family: 'Malgun Gothic', sans-serif; 
-            background: var(--bg-color); 
-            color: var(--text-color); 
-            height: 100vh; 
-            height: 100dvh; 
-            display: flex; 
-            overflow: hidden; 
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
-        }
-        
-        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; flex-shrink: 0; }
-        .sidebar-header { padding: 20px; background: var(--header-bg); border-bottom: 1px solid var(--border-color); }
-        .sidebar-header h2 { font-size: 1.1rem; margin-bottom: 15px; color: var(--accent-color); display: flex; align-items: center; gap: 8px; }
-        
-        .sync-actions { display: flex; gap: 5px; margin-bottom: 15px; }
-        .sync-btn { flex: 1; padding: 6px; font-size: 0.75rem; border: 1px solid #444; background: #2d2d2d; color: #aaa; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
-        .sync-btn:hover { background: #3e3e42; color: white; }
-        
-        .add-channel-box { display: flex; gap: 5px; }
-        .add-channel-box input { flex: 1; padding: 8px; background: #3c3c3c; border: 1px solid #3c3c3c; color: white; border-radius: 4px; outline: none; }
-        .add-channel-box button { padding: 8px 12px; background: #0e639c; border: none; color: white; border-radius: 4px; cursor: pointer; }
-
-        .channel-list { flex: 1; overflow-y: auto; padding: 10px 0 150px 0; }
-        
-        .channel-item { cursor: pointer; transition: background 0.1s, border-color 0.2s; border-left: 3px solid transparent; }
-        .channel-item.active { background: var(--item-active); border-left-color: var(--accent-color); }
-        .channel-item.dragging { opacity: 0.5; background: #333; } 
-        .channel-item.drag-over { border-top: 2px solid var(--accent-color); }
-
-        .channel-header { display: flex; align-items: center; padding: 12px 15px; }
-        .channel-header:hover { background: var(--item-hover); }
-        
-        .drag-handle { color: #555; margin-right: 10px; cursor: grab; font-size: 0.9rem; padding: 2px; }
-        .drag-handle:hover { color: #999; }
-
-        .channel-icon { width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover; border: 1px solid #444; }
-        .channel-name { flex: 1; font-size: 0.95rem; color: var(--text-highlight); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .video-count-badge { font-size: 0.8rem; color: #888; margin-left: 5px; }
-
-        .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-color); }
-        
-        .main-header { 
-            padding: 12px 30px; 
-            border-bottom: 1px solid var(--border-color); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            min-height: 70px; 
-        }
-        .header-title-wrapper { display: flex; align-items: center; gap: 15px; flex: 1; overflow: hidden; }
-        
-        .title-text-group { display: flex; flex-direction: column; justify-content: center; }
-        .main-header h1 { font-size: 1.3rem; color: var(--text-highlight); font-weight: normal; margin: 0; line-height: 1.2; }
-        .channel-url-info { font-size: 0.7rem; color: #888; line-height: 1.2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        .header-actions { display: none; gap: 10px; align-items: center; }
-        .header-btn { padding: 6px 15px; border: 1px solid #444; background: #252526; color: #ccc; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; white-space: nowrap; }
-        .header-btn:hover { background: #3e3e42; color: #fff; }
-        .header-btn.primary { background: #0e639c; color: white; border: none; }
-        .header-btn.success { background: #28a745; color: white; border: none; }
-        
-        .sort-btn { font-size: 1.1rem; color: #666; background: none; border: none; cursor: pointer; padding: 5px; transition: color 0.2s; }
-        .sort-btn.active { color: var(--accent-color); }
-
-        #progressContainer { display: none; width: 100%; height: 4px; background: #333; position: relative; }
-        #progressBar { width: 0%; height: 100%; background: var(--accent-color); transition: width 0.3s; }
-
-        .video-list-container { flex: 1; overflow-y: auto; padding: 30px; }
-        
-        .video-card { display: flex; align-items: center; background: #2d2d2d; border-radius: 6px; padding: 18px 12px 12px 12px; margin-bottom: 16px; cursor: pointer; border: 1px solid transparent; }
-        .video-card:hover { background: #333333; border-color: #555; }
-        
-        .video-thumb-wrapper { position: relative; margin-right: 20px; flex-shrink: 0; }
-        .video-thumb { width: 160px; height: 90px; border-radius: 4px; object-fit: cover; background: #000; display: block; }
-        .video-index-badge { position: absolute; top: -16px; left: 0; color: var(--accent-color); font-size: 0.75rem; font-weight: 600; pointer-events: none; white-space: nowrap; z-index: 2; }
-
-        .video-details { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-        .video-title { font-size: 0.95rem; margin-bottom: 8px; color: var(--text-highlight); line-height: 1.4; }
-        .video-meta { font-size: 0.8rem; color: #888; }
-
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-overlay.active { display: flex; }
-        .player-wrapper { display: flex; align-items: flex-start; gap: 15px; width: 90%; max-width: 1200px; }
-        .player-content { flex: 1; background: #000; border-radius: 8px; overflow: hidden; position: relative; padding-bottom: 56.25%; }
-        .player-content iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        .close-btn { background: none; border: none; color: #888; font-size: 2.5rem; cursor: pointer; }
-
-        .empty-state { text-align: center; margin-top: 100px; color: #555; width: 100%; }
-        .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top: 3px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        body { font-family: sans-serif; background: var(--bg-color); color: var(--text-color); height: 100dvh; display: flex; overflow: hidden; }
+        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; background: var(--header-bg); }
+        .add-channel-box { display: flex; gap: 5px; margin-top: 10px; }
+        .add-channel-box input { flex: 1; padding: 8px; background: #3c3c3c; border: 1px solid #3c3c3c; color: white; border-radius: 4px; }
+        .add-channel-box button { padding: 8px 12px; background: #0e639c; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .channel-list { flex: 1; overflow-y: auto; }
+        .channel-item { padding: 12px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-left: 3px solid transparent; }
+        .channel-item.active { background: #37373d; border-left-color: var(--accent-color); }
+        .channel-icon { width: 32px; height: 32px; border-radius: 50%; }
+        .main-content { flex: 1; display: flex; flex-direction: column; }
+        .main-header { padding: 15px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .video-list-container { flex: 1; overflow-y: auto; padding: 20px; }
+        .video-card { display: flex; gap: 15px; background: #2d2d2d; padding: 12px; border-radius: 6px; margin-bottom: 10px; cursor: pointer; }
+        .video-thumb { width: 140px; aspect-ratio: 16/9; object-fit: cover; border-radius: 4px; }
+        #progressContainer { display: none; height: 3px; background: #333; }
+        #progressBar { height: 100%; background: var(--accent-color); width: 0; transition: width 0.3s; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
     </style>
 </head>
 <body>
-
     <aside class="sidebar">
         <div class="sidebar-header">
-            <h2><i class="fab fa-youtube"></i> 동영상 목록</h2>
-            <div class="sync-actions">
-                <button class="sync-btn" onclick="uploadToServer()" title="서버에 저장"><i class="fas fa-cloud-upload-alt"></i> Save to Cloud</button>
-                <button class="sync-btn" onclick="downloadFromServer()" title="서버에서 불러오기"><i class="fas fa-cloud-download-alt"></i> Load from Cloud</button>
-            </div>
+            <h2 style="color:var(--accent-color)"><i class="fab fa-youtube"></i> Library</h2>
             <div class="add-channel-box">
-                <input type="text" id="channelInput" placeholder="ID, 핸들(@) 또는 URL">
+                <input type="text" id="channelInput" placeholder="@핸들 또는 URL">
                 <button id="addChannelBtn"><i class="fas fa-plus"></i></button>
             </div>
         </div>
@@ -136,294 +43,153 @@
 
     <main class="main-content">
         <div id="progressContainer"><div id="progressBar"></div></div>
-        
         <div class="main-header">
-            <div class="header-title-wrapper">
-                <div class="title-text-group">
-                    <h1 id="currentTitle">Select Channel</h1>
-                    <div id="channelUrl" class="channel-url-info"></div>
-                </div>
-                <i class="fas fa-times" id="mainClearBtn" style="display:none; cursor:pointer; color:#666;" onclick="clearMainArea()" title="비우기"></i>
+            <div>
+                <h1 id="currentTitle" style="font-size:1.1rem;">채널을 선택하세요</h1>
+                <div id="channelUrl" style="font-size:0.7rem; color:#888"></div>
             </div>
-            <div class="header-actions" id="headerActions">
-                <button class="sort-btn" id="sortAsc" onclick="changeSort('asc')" title="오래된순"><i class="fas fa-sort-amount-up-alt"></i></button>
-                <button class="sort-btn" id="sortDesc" onclick="changeSort('desc')" title="최신순"><i class="fas fa-sort-amount-down"></i></button>
-                <div style="width:1px; height:20px; background:#444; margin:0 5px;"></div>
-                <button class="header-btn" onclick="refreshCurrentChannel()" title="강제 업데이트"><i class="fas fa-sync-alt"></i> Update</button>
-                <button class="header-btn primary" onclick="openChannelVideosInNewTab()" title="유튜브 페이지 열기"><i class="fas fa-external-link-alt"></i> New Tab</button>
-                <button class="header-btn success" id="copyBtn" onclick="copyNextLink()" title="순차적 링크 복사"><i class="fas fa-copy"></i> NotebookLM (Ready)</button>
+            <div id="headerActions" style="display:none; gap:10px;">
+                <button onclick="refreshCurrentChannel()">업데이트</button>
+                <button id="copyBtn" onclick="copyNextLink()">링크 복사</button>
             </div>
         </div>
-
-        <div class="video-list-container" id="videoListContainer">
-            <div class="empty-state">
-                <i class="fab fa-youtube" style="font-size: 3rem; margin-bottom: 10px;"></i>
-                <p>왼쪽에서 채널을 선택하거나 서버에서 데이터를 불러오세요.</p>
-            </div>
-        </div>
+        <div class="video-list-container" id="videoListContainer"></div>
     </main>
 
-    <div class="modal-overlay" id="playerModal">
-        <div class="player-wrapper">
-            <div class="player-content"><iframe id="youtubePlayer" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
-            <button class="close-btn" onclick="closePlayer()">×</button>
+    <div class="modal" id="playerModal">
+        <div style="width:90%; max-width:900px; aspect-ratio:16/9; position:relative;">
+            <button onclick="closePlayer()" style="position:absolute; top:-35px; right:0; color:white; background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button>
+            <iframe id="youtubePlayer" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
         </div>
     </div>
 
     <script>
-        const API_SERVER_URL = '';
+        const API_SERVER_URL = ''; 
         let myChannels = JSON.parse(localStorage.getItem('myVideos')) || [];
         let currentVideoList = [];
         let activeChannelId = null;
-        let loadingChannelId = null; 
-        let currentSort = 'asc';
+        let loadingChannelId = null;
         let copyIndex = 0;
-        let dragSrcEl = null;
 
         window.onload = renderChannelList;
 
-        async function uploadToServer() {
-            if (myChannels.length === 0) return alert('저장할 목록이 없습니다.');
-            try {
-                const res = await fetch(`${API_SERVER_URL}/api/sync-upload`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: myChannels })
-                });
-                const result = await res.json();
-                alert(result.message || '업로드 성공!');
-            } catch (e) { alert('업로드 실패: ' + e.message); }
+        function saveToStorage() {
+            localStorage.setItem('myVideos', JSON.stringify(myChannels));
         }
-
-        async function downloadFromServer() {
-            if (!confirm('서버의 데이터로 로컬 목록을 덮어씌울까요?')) return;
-            try {
-                const res = await fetch(`${API_SERVER_URL}/api/sync-download`);
-                const result = await res.json();
-                if (result.error) throw new Error(result.error);
-                myChannels = result.data;
-                saveAndRender();
-                alert('데이터를 성공적으로 불러왔습니다!');
-            } catch (e) { alert('불러오기 실패: ' + e.message); }
-        }
-
-        document.getElementById('addChannelBtn').onclick = async () => {
-            const input = document.getElementById('channelInput');
-            let rawInput = input.value.trim();
-            if (!rawInput) return;
-
-            // [수정] 정확한 핸들 추출 로직 (하이픈, 점 포함 / 뒤에오는 경로는 제외)
-            let handle = "";
-            const handleMatch = rawInput.match(/@([\w.-]+)/);
-            if (handleMatch) {
-                handle = "@" + handleMatch[1];
-            }
-
-            let apiUrl = '';
-            const videoMatch = rawInput.match(/(?:v=|\/embed\/|youtu\.be\/)([^&?#/]+)/);
-            const channelIdMatch = rawInput.match(/(?:channel\/|^)(UC[\w-]{21}[AQgw])/);
-
-            if (videoMatch) {
-                apiUrl = `${API_SERVER_URL}/api/find-channel-by-video?videoId=${videoMatch[1]}`;
-            } else if (handle) {
-                // 정확히 추출된 핸들(@coin-rich 등)만 사용
-                apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(handle)}`;
-            } else if (channelIdMatch) {
-                apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(channelIdMatch[1])}`;
-            } else {
-                alert("입력하신 정보가 올바른 형식의 핸들(@)이나 URL이 아닙니다.");
-                return;
-            }
-            
-            try {
-                const res = await fetch(apiUrl);
-                const data = await res.json();
-                if (data.error) throw new Error(data.error);
-                if (myChannels.some(c => c.channelId === data.channelId)) return alert('이미 추가됨');
-                
-                data.videos = []; 
-                myChannels.push(data);
-                saveAndRender();
-                input.value = '';
-                loadVideos(data.channelId, data.title.replace(/'/g, "\\'"));
-            } catch (e) { alert(e.message); }
-        };
-
-        function renderChannelList() {
-            const wrapper = document.getElementById('channelListWrapper');
-            wrapper.innerHTML = myChannels.map((c, i) => `
-                <div class="channel-item ${activeChannelId === c.channelId ? 'active' : ''}" 
-                     draggable="true" 
-                     data-index="${i}"
-                     ondragstart="handleDragStart(event)" 
-                     ondragover="handleDragOver(event)" 
-                     ondragenter="handleDragEnter(event)" 
-                     ondragleave="handleDragLeave(event)" 
-                     ondrop="handleDrop(event)" 
-                     ondragend="handleDragEnd(event)"
-                     onclick="loadVideos('${c.channelId}', '${c.title.replace(/'/g, "\\'")}')">
-                    <div class="channel-header">
-                        <i class="fas fa-bars drag-handle" title="Drag to reorder"></i>
-                        <img src="${c.thumbnail}" class="channel-icon">
-                        <span class="channel-name">${c.title} <span class="video-count-badge">(${c.videoCount || 0})</span></span>
-                        <i class="fas fa-times" style="color:#555; padding:5px;" onclick="removeChannel(event, ${i})"></i>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function handleDragStart(e) { dragSrcEl = e.currentTarget; e.dataTransfer.effectAllowed = 'move'; e.currentTarget.classList.add('dragging'); }
-        function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); return false; }
-        function handleDragEnter(e) { e.currentTarget.classList.add('drag-over'); }
-        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-        function handleDrop(e) {
-            if (e.stopPropagation) e.stopPropagation();
-            const target = e.currentTarget;
-            if (dragSrcEl !== target) {
-                const oldIndex = parseInt(dragSrcEl.getAttribute('data-index'));
-                const newIndex = parseInt(target.getAttribute('data-index'));
-                const item = myChannels.splice(oldIndex, 1)[0];
-                myChannels.splice(newIndex, 0, item);
-                saveAndRender();
-            }
-            return false;
-        }
-        function handleDragEnd(e) { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.channel-item').forEach(item => item.classList.remove('drag-over')); }
 
         async function loadVideos(channelId, title, forceRefresh = false) {
             const channel = myChannels.find(c => c.channelId === channelId);
-            if (!forceRefresh && activeChannelId === channelId && channel.videos && channel.videos.length > 0) return;
-
-            activeChannelId = channelId;
-            loadingChannelId = channelId; 
-            copyIndex = 0; 
-            renderChannelList();
-
-            document.getElementById('currentTitle').textContent = title;
-            const channelUrlDiv = document.getElementById('channelUrl');
-            const handleText = (channel.handle ? `https://www.youtube.com/${channel.handle}` : `https://www.youtube.com/channel/${channelId}`) + '/videos';
-            channelUrlDiv.innerHTML = `${handleText}<br><span style="color:#666; font-size:0.65rem;">ID: ${channelId}</span>`;
-
-            document.getElementById('headerActions').style.display = 'flex';
-            document.getElementById('mainClearBtn').style.display = 'inline';
-
-            if (!forceRefresh && channel.videos && channel.videos.length > 0) {
+            
+            // 캐시 데이터가 있고 강제 새로고침이 아니면 즉시 표시
+            if (!forceRefresh && activeChannelId === channelId && channel.videos?.length > 0) {
                 currentVideoList = channel.videos;
-                applySortAndRender();
+                renderVideoList();
                 return;
             }
 
-            currentVideoList = [];
-            updateCopyButtonLabel();
-            const container = document.getElementById('videoListContainer');
-            container.innerHTML = '<div class="empty-state"><div class="spinner"></div><p id="pText">데이터를 불러오는 중...</p></div>';
-            
-            const progressContainer = document.getElementById('progressContainer');
-            const progressBar = document.getElementById('progressBar');
-            progressContainer.style.display = 'block';
-            progressBar.style.width = '0%';
+            activeChannelId = channelId;
+            loadingChannelId = channelId;
+            copyIndex = 0;
+            renderChannelList();
 
+            document.getElementById('currentTitle').textContent = title;
+            document.getElementById('headerActions').style.display = 'flex';
+            
+            // 새로고침 시 기존 데이터 초기화
+            if (forceRefresh) channel.videos = [];
+
+            const container = document.getElementById('videoListContainer');
+            container.innerHTML = '<p style="text-align:center; padding:20px;">로딩 중...</p>';
+            
             let nextPageToken = '';
+            document.getElementById('progressContainer').style.display = 'block';
+
             try {
                 while (nextPageToken !== null) {
                     if (loadingChannelId !== channelId) return;
+
                     const res = await fetch(`${API_SERVER_URL}/api/channel-videos?channelId=${channelId}&pageToken=${nextPageToken}`);
                     const data = await res.json();
                     if (data.error) throw new Error(data.error);
 
-                    currentVideoList = currentVideoList.concat(data.videos);
+                    // 핵심: 페이지 데이터를 받을 때마다 즉시 누적 및 저장
+                    channel.videos = channel.videos.concat(data.videos);
+                    currentVideoList = channel.videos;
+                    
+                    saveToStorage(); // 루프 도중 실시간 저장
+                    renderVideoList(); // 루프 도중 실시간 UI 갱신
+
                     nextPageToken = data.nextPageToken || null;
-
-                    const percent = data.totalCount > 0 ? Math.round((currentVideoList.length / data.totalCount) * 100) : 0;
-                    progressBar.style.width = Math.min(percent, 100) + '%';
-                    const info = document.getElementById('pText');
-                    if(info) info.innerText = `로드 중... (${currentVideoList.length} / ${data.totalCount}) - ${Math.min(percent, 100)}%`;
-                    updateCopyButtonLabel();
+                    document.getElementById('progressBar').style.width = nextPageToken ? '50%' : '100%';
                 }
-
-                channel.videos = currentVideoList;
-                saveToStorage();
-                progressContainer.style.display = 'none';
-                applySortAndRender();
             } catch (e) {
-                container.innerHTML = `<div class="empty-state"><p style="color:var(--danger-color)">로딩 오류: ${e.message}</p></div>`;
-                progressContainer.style.display = 'none';
+                if (channel.videos.length === 0) container.innerHTML = `<p style="color:red; text-align:center;">에러: ${e.message}</p>`;
+            } finally {
+                document.getElementById('progressContainer').style.display = 'none';
             }
         }
 
-        function refreshCurrentChannel() { if (activeChannelId) { const channel = myChannels.find(c => c.channelId === activeChannelId); loadVideos(activeChannelId, channel.title, true); } }
-        function copyNextLink() {
-            if (!currentVideoList || currentVideoList.length === 0) return alert('복사할 영상이 없습니다.');
-            if (copyIndex >= currentVideoList.length) {
-                if (confirm('모든 링크를 복사했습니다. 처음부터 다시 시작할까요?')) { copyIndex = 0; updateCopyButtonLabel(); }
-                return;
-            }
-            const video = currentVideoList[copyIndex];
-            const link = `https://www.youtube.com/watch?v=${video.id}`;
-            navigator.clipboard.writeText(link).then(() => { copyIndex++; updateCopyButtonLabel(); }).catch(err => alert('복사 실패'));
-        }
-
-        function updateCopyButtonLabel() {
-            const btn = document.getElementById('copyBtn');
-            const total = currentVideoList.length;
-            if (total > 0) {
-                btn.innerHTML = `<i class="fas fa-copy"></i> Copy ${copyIndex + 1} / ${total}`;
-                btn.classList.toggle('primary', copyIndex >= total);
-                btn.classList.toggle('success', copyIndex < total);
-                if(copyIndex >= total) btn.innerHTML = `<i class="fas fa-check"></i> All ${total} Copied`;
-            } else btn.innerHTML = `<i class="fas fa-copy"></i> NotebookLM (Empty)`;
-        }
-
-        function openChannelVideosInNewTab() { if (activeChannelId) window.open(`https://www.youtube.com/channel/${activeChannelId}/videos`, '_blank'); }
-        function changeSort(order) { currentSort = order; copyIndex = 0; applySortAndRender(); }
-
-        function applySortAndRender() {
-            if (!currentVideoList.length) return;
-            document.getElementById('sortAsc').classList.toggle('active', currentSort === 'asc');
-            document.getElementById('sortDesc').classList.toggle('active', currentSort === 'desc');
-            currentVideoList.sort((a, b) => { const dateA = new Date(a.publishedAt); const dateB = new Date(b.publishedAt); return currentSort === 'asc' ? dateA - dateB : dateB - dateA; });
-            updateCopyButtonLabel();
+        function renderVideoList() {
             const container = document.getElementById('videoListContainer');
-            const totalCount = currentVideoList.length;
-            container.innerHTML = currentVideoList.map((v, index) => `
+            container.innerHTML = currentVideoList.map((v, i) => `
                 <div class="video-card" onclick="openPlayer('${v.id}')">
-                    <div class="video-thumb-wrapper">
-                        <div class="video-index-badge">${index + 1} / ${totalCount}</div>
-                        <img src="${v.thumbnail}" class="video-thumb">
+                    <img src="${v.thumbnail}" class="video-thumb">
+                    <div>
+                        <div style="font-weight:bold; margin-bottom:5px;">${v.title}</div>
+                        <div style="font-size:0.8rem; color:#888;">${v.publishedAt.split('T')[0]} | ${v.duration || ''}</div>
                     </div>
-                    <div class="video-details">
-                        <div class="video-title">${v.title}</div>
-                        <div class="video-meta">📅 ${formatDateTime(v.publishedAt)} • ⏱ ${formatDuration(v.duration)}</div>
-                    </div>
+                </div>
+            `).join('');
+            updateCopyBtn();
+        }
+
+        function renderChannelList() {
+            const wrapper = document.getElementById('channelListWrapper');
+            wrapper.innerHTML = myChannels.map((c, i) => `
+                <div class="channel-item ${activeChannelId === c.channelId ? 'active' : ''}" onclick="loadVideos('${c.channelId}', '${c.title.replace(/'/g, "\\'")}')">
+                    <img src="${c.thumbnail}" class="channel-icon">
+                    <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.title}</span>
+                    <i class="fas fa-times" style="color:#555" onclick="removeChannel(event, ${i})"></i>
                 </div>
             `).join('');
         }
 
-        function clearMainArea() {
-            activeChannelId = null; loadingChannelId = null; currentVideoList = []; copyIndex = 0; updateCopyButtonLabel(); renderChannelList();
-            document.getElementById('currentTitle').textContent = 'Select Channel';
-            document.getElementById('channelUrl').textContent = '';
-            document.getElementById('headerActions').style.display = 'none';
-            document.getElementById('mainClearBtn').style.display = 'none';
-            document.getElementById('videoListContainer').innerHTML = `<div class="empty-state"><i class="fab fa-youtube" style="font-size:3rem"></i><p>채널을 선택하세요.</p></div>`;
-            document.getElementById('progressContainer').style.display = 'none';
+        // 나머지 유틸리티 함수 (복사, 플레이어 등)
+        function updateCopyBtn() { document.getElementById('copyBtn').textContent = `Copy ${copyIndex + 1} / ${currentVideoList.length}`; }
+        function copyNextLink() {
+            if (copyIndex >= currentVideoList.length) return alert('끝!');
+            navigator.clipboard.writeText(`https://www.youtube.com/watch?v=${currentVideoList[copyIndex].id}`).then(() => {
+                copyIndex++; updateCopyBtn();
+            });
         }
+        function openPlayer(id) {
+            document.getElementById('playerModal').classList.add('active');
+            document.getElementById('youtubePlayer').src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+        }
+        function closePlayer() {
+            document.getElementById('playerModal').classList.remove('active');
+            document.getElementById('youtubePlayer').src = '';
+        }
+        function removeChannel(e, i) {
+            e.stopPropagation();
+            if(confirm('삭제하시겠습니까?')) { myChannels.splice(i, 1); saveToStorage(); renderChannelList(); }
+        }
+        function refreshCurrentChannel() { if(activeChannelId) loadVideos(activeChannelId, "", true); }
 
-        function saveToStorage() { localStorage.setItem('myVideos', JSON.stringify(myChannels)); }
-        function saveAndRender() { saveToStorage(); renderChannelList(); }
-        function openPlayer(id) { document.getElementById('playerModal').classList.add('active'); document.getElementById('youtubePlayer').src = `https://www.youtube.com/embed/${id}?autoplay=1`; }
-        function closePlayer() { document.getElementById('playerModal').classList.remove('active'); document.getElementById('youtubePlayer').src = ''; }
-        function removeChannel(e, i) { e.stopPropagation(); if (confirm('삭제하시겠습니까?')) { if(myChannels[i].channelId === activeChannelId) clearMainArea(); myChannels.splice(i, 1); saveAndRender(); } }
-        function formatDuration(pt) { if(!pt) return "0:00"; const m = pt.match(/PT(\d+H)?(\d+M)?(\d+S)?/); if(!m) return "0:00"; const h = parseInt(m[1]) || 0; const min = parseInt(m[2]) || 0; const sec = parseInt(m[3]) || 0; return `${h > 0 ? h + ':' : ''}${h > 0 ? String(min).padStart(2, '0') : min}:${String(sec).padStart(2, '0')}`; }
-        function formatDateTime(isoString) {
-            const d = new Date(isoString);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const hour = String(d.getHours()).padStart(2, '0');
-            const min = String(d.getMinutes()).padStart(2, '0');
-            return `${year}-${month}-${day} ${hour}:${min}`;
-        }
+        document.getElementById('addChannelBtn').onclick = async () => {
+            const input = document.getElementById('channelInput');
+            if(!input.value.trim()) return;
+            try {
+                const res = await fetch(`${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(input.value.trim())}`);
+                const data = await res.json();
+                if(data.error) throw new Error(data.error);
+                if(myChannels.some(c => c.channelId === data.channelId)) return alert('이미 있음');
+                myChannels.push({...data, videos: []});
+                saveToStorage();
+                renderChannelList();
+                input.value = '';
+            } catch(e) { alert(e.message); }
+        };
     </script>
 </body>
 </html>
