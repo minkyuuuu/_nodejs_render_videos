@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Video Library Pro</title>
+    <title>My Video Library Pro (IndexedDB)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <style>
         :root {
             --bg-color: #1e1e1e;           
@@ -37,7 +38,6 @@
             padding-right: env(safe-area-inset-right);
         }
         
-        /* [수정] 사이드바 트랜지션 추가 */
         .sidebar { 
             width: var(--sidebar-width); 
             background: var(--sidebar-bg); 
@@ -50,7 +50,6 @@
             white-space: nowrap;
         }
 
-        /* [추가] 사이드바 접힘 상태 */
         .sidebar.collapsed {
             width: 0;
             min-width: 0;
@@ -70,7 +69,6 @@
 
         .channel-list { flex: 1; overflow-y: auto; padding: 10px 0 150px 0; }
         
-        /* [수정] 드래그 관련 스타일 수정 (SortableJS) */
         .channel-item { 
             cursor: pointer; 
             transition: background 0.1s, border-color 0.2s; 
@@ -79,14 +77,12 @@
         }
         .channel-item.active { background: var(--item-active); border-left-color: var(--accent-color); }
         
-        /* SortableJS 클래스 */
         .sortable-ghost { opacity: 0.4; background: #333; border: 1px dashed #666; }
         .sortable-drag { background: var(--item-active); opacity: 1; }
 
         .channel-header { display: flex; align-items: center; padding: 12px 15px; cursor: default; }
         .channel-header:hover { background: var(--item-hover); }
         
-        /* 드래그 핸들 스타일 */
         .drag-handle { 
             color: #555; 
             margin-right: 10px; 
@@ -114,7 +110,6 @@
         }
         .header-title-wrapper { display: flex; align-items: center; gap: 15px; flex: 1; overflow: hidden; }
         
-        /* [추가] 사이드바 토글 버튼 */
         .toggle-sidebar-btn {
             background: none;
             border: none;
@@ -229,25 +224,59 @@
 
     <script>
         const API_SERVER_URL = '';
-        let myChannels = JSON.parse(localStorage.getItem('myVideos')) || [];
+        let myChannels = []; // 초기값 빈 배열
         let currentVideoList = [];
         let activeChannelId = null;
         let loadingChannelId = null; 
         let currentSort = 'asc';
         let copyIndex = 0;
-        
-        // SortableJS 인스턴스
         let sortableInstance = null;
 
-        window.onload = () => {
+        // [변경] localForage 설정 (선택사항, 기본값 써도 됨)
+        localforage.config({
+            name: 'myVideoLibraryApp',
+            storeName: 'channel_data'
+        });
+
+        // [변경] 비동기로 데이터 로드
+        window.onload = async () => {
+            try {
+                // localStorage 대신 localforage 사용
+                const stored = await localforage.getItem('myVideos');
+                // localForage는 JSON.parse가 필요 없습니다 (자동 처리)
+                if (stored) {
+                    myChannels = stored;
+                } else {
+                    myChannels = [];
+                }
+            } catch (err) {
+                console.error("데이터 로드 실패:", err);
+                myChannels = [];
+            }
             renderChannelList();
-            initSortable(); // 로드 시 Sortable 초기화
+            initSortable();
         };
 
-        // [추가] 사이드바 토글
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('collapsed');
+        }
+
+        // [변경] 저장 함수 비동기화
+        async function saveToStorage() {
+            try {
+                // JSON.stringify 불필요
+                await localforage.setItem('myVideos', myChannels);
+                console.log("저장 완료");
+            } catch (err) {
+                console.error("저장 실패 (용량 부족 등):", err);
+                alert("저장소 오류가 발생했습니다: " + err.message);
+            }
+        }
+        
+        async function saveAndRender() {
+            await saveToStorage();
+            renderChannelList();
         }
 
         async function uploadToServer() {
@@ -270,7 +299,7 @@
                 const result = await res.json();
                 if (result.error) throw new Error(result.error);
                 myChannels = result.data;
-                saveAndRender();
+                await saveAndRender(); // 비동기 대기
                 alert('데이터를 성공적으로 불러왔습니다!');
             } catch (e) { alert('불러오기 실패: ' + e.message); }
         }
@@ -309,31 +338,29 @@
                 
                 data.videos = []; 
                 myChannels.push(data);
-                saveAndRender();
+                await saveAndRender(); // 비동기 대기
                 input.value = '';
                 loadVideos(data.channelId, data.title.replace(/'/g, "\\'"));
             } catch (e) { alert(e.message); }
         };
 
-        // [중요] SortableJS 초기화
         function initSortable() {
             const el = document.getElementById('channelListWrapper');
             if(sortableInstance) sortableInstance.destroy();
 
             sortableInstance = new Sortable(el, {
                 animation: 150,
-                handle: ".drag-handle", // 핸들로만 드래그 가능
+                handle: ".drag-handle", 
                 ghostClass: "sortable-ghost",
                 dragClass: "sortable-drag",
                 onEnd: function (evt) {
                     const item = myChannels.splice(evt.oldIndex, 1)[0];
                     myChannels.splice(evt.newIndex, 0, item);
-                    saveToStorage(); // 데이터만 저장 (렌더링은 Sortable이 이미 처리함)
+                    saveToStorage(); // 드래그 앤 드롭 후 저장
                 }
             });
         }
 
-        // [수정] 기본 드래그 이벤트 제거 및 구조 단순화
         function renderChannelList() {
             const wrapper = document.getElementById('channelListWrapper');
             wrapper.innerHTML = myChannels.map((c, i) => `
@@ -356,7 +383,7 @@
             activeChannelId = channelId;
             loadingChannelId = channelId; 
             copyIndex = 0; 
-            renderChannelList(); // 활성 상태 업데이트
+            renderChannelList(); 
 
             document.getElementById('currentTitle').textContent = title;
             const channelUrlDiv = document.getElementById('channelUrl');
@@ -401,7 +428,7 @@
                 }
 
                 channel.videos = currentVideoList;
-                saveToStorage();
+                await saveToStorage(); // 로딩 후 저장
                 progressContainer.style.display = 'none';
                 applySortAndRender();
             } catch (e) {
@@ -468,11 +495,18 @@
             document.getElementById('progressContainer').style.display = 'none';
         }
 
-        function saveToStorage() { localStorage.setItem('myVideos', JSON.stringify(myChannels)); }
-        function saveAndRender() { saveToStorage(); renderChannelList(); }
         function openPlayer(id) { document.getElementById('playerModal').classList.add('active'); document.getElementById('youtubePlayer').src = `https://www.youtube.com/embed/${id}?autoplay=1`; }
         function closePlayer() { document.getElementById('playerModal').classList.remove('active'); document.getElementById('youtubePlayer').src = ''; }
-        function removeChannel(e, i) { e.stopPropagation(); if (confirm('삭제하시겠습니까?')) { if(myChannels[i].channelId === activeChannelId) clearMainArea(); myChannels.splice(i, 1); saveAndRender(); } }
+        
+        async function removeChannel(e, i) { 
+            e.stopPropagation(); 
+            if (confirm('삭제하시겠습니까?')) { 
+                if(myChannels[i].channelId === activeChannelId) clearMainArea(); 
+                myChannels.splice(i, 1); 
+                await saveAndRender(); 
+            } 
+        }
+        
         function formatDuration(pt) { if(!pt) return "0:00"; const m = pt.match(/PT(\d+H)?(\d+M)?(\d+S)?/); if(!m) return "0:00"; const h = parseInt(m[1]) || 0; const min = parseInt(m[2]) || 0; const sec = parseInt(m[3]) || 0; return `${h > 0 ? h + ':' : ''}${h > 0 ? String(min).padStart(2, '0') : min}:${String(sec).padStart(2, '0')}`; }
         function formatDateTime(isoString) {
             const d = new Date(isoString);
