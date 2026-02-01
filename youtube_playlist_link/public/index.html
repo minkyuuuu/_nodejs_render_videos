@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>My Video Library Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
             --bg-color: #1e1e1e;           
@@ -17,6 +18,7 @@
             --item-active: #37373d;        
             --border-color: #3e3e42;       
             --danger-color: #ff6b6b;
+            --success-color: #4ec9b0;
             --sidebar-width: 350px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -35,7 +37,26 @@
             padding-right: env(safe-area-inset-right);
         }
         
-        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; flex-shrink: 0; }
+        /* [수정] 사이드바 트랜지션 추가 */
+        .sidebar { 
+            width: var(--sidebar-width); 
+            background: var(--sidebar-bg); 
+            border-right: 1px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+            flex-shrink: 0; 
+            transition: width 0.3s ease, min-width 0.3s ease;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        /* [추가] 사이드바 접힘 상태 */
+        .sidebar.collapsed {
+            width: 0;
+            min-width: 0;
+            border-right: none;
+        }
+
         .sidebar-header { padding: 20px; background: var(--header-bg); border-bottom: 1px solid var(--border-color); }
         .sidebar-header h2 { font-size: 1.1rem; margin-bottom: 15px; color: var(--accent-color); display: flex; align-items: center; gap: 8px; }
         
@@ -49,16 +70,33 @@
 
         .channel-list { flex: 1; overflow-y: auto; padding: 10px 0 150px 0; }
         
-        .channel-item { cursor: pointer; transition: background 0.1s, border-color 0.2s; border-left: 3px solid transparent; }
+        /* [수정] 드래그 관련 스타일 수정 (SortableJS) */
+        .channel-item { 
+            cursor: pointer; 
+            transition: background 0.1s, border-color 0.2s; 
+            border-left: 3px solid transparent; 
+            background: var(--sidebar-bg);
+        }
         .channel-item.active { background: var(--item-active); border-left-color: var(--accent-color); }
-        .channel-item.dragging { opacity: 0.5; background: #333; } 
-        .channel-item.drag-over { border-top: 2px solid var(--accent-color); }
+        
+        /* SortableJS 클래스 */
+        .sortable-ghost { opacity: 0.4; background: #333; border: 1px dashed #666; }
+        .sortable-drag { background: var(--item-active); opacity: 1; }
 
-        .channel-header { display: flex; align-items: center; padding: 12px 15px; }
+        .channel-header { display: flex; align-items: center; padding: 12px 15px; cursor: default; }
         .channel-header:hover { background: var(--item-hover); }
         
-        .drag-handle { color: #555; margin-right: 10px; cursor: grab; font-size: 0.9rem; padding: 2px; }
-        .drag-handle:hover { color: #999; }
+        /* 드래그 핸들 스타일 */
+        .drag-handle { 
+            color: #555; 
+            margin-right: 10px; 
+            cursor: grab; 
+            font-size: 1.1rem; 
+            padding: 4px 6px; 
+            transition: color 0.2s;
+        }
+        .drag-handle:hover { color: var(--accent-color); background: rgba(255,255,255,0.05); border-radius: 4px; }
+        .drag-handle:active { cursor: grabbing; }
 
         .channel-icon { width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover; border: 1px solid #444; }
         .channel-name { flex: 1; font-size: 0.95rem; color: var(--text-highlight); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -76,6 +114,21 @@
         }
         .header-title-wrapper { display: flex; align-items: center; gap: 15px; flex: 1; overflow: hidden; }
         
+        /* [추가] 사이드바 토글 버튼 */
+        .toggle-sidebar-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+        .toggle-sidebar-btn:hover { color: var(--accent-color); }
+
         .title-text-group { display: flex; flex-direction: column; justify-content: center; }
         .main-header h1 { font-size: 1.3rem; color: var(--text-highlight); font-weight: normal; margin: 0; line-height: 1.2; }
         .channel-url-info { font-size: 0.7rem; color: #888; line-height: 1.2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -119,7 +172,7 @@
 </head>
 <body>
 
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h2><i class="fab fa-youtube"></i> 동영상 목록</h2>
             <div class="sync-actions">
@@ -139,6 +192,10 @@
         
         <div class="main-header">
             <div class="header-title-wrapper">
+                <button class="toggle-sidebar-btn" onclick="toggleSidebar()" title="사이드바 접기/펼치기">
+                    <i class="fas fa-bars"></i>
+                </button>
+
                 <div class="title-text-group">
                     <h1 id="currentTitle">Select Channel</h1>
                     <div id="channelUrl" class="channel-url-info"></div>
@@ -178,9 +235,20 @@
         let loadingChannelId = null; 
         let currentSort = 'asc';
         let copyIndex = 0;
-        let dragSrcEl = null;
+        
+        // SortableJS 인스턴스
+        let sortableInstance = null;
 
-        window.onload = renderChannelList;
+        window.onload = () => {
+            renderChannelList();
+            initSortable(); // 로드 시 Sortable 초기화
+        };
+
+        // [추가] 사이드바 토글
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
 
         async function uploadToServer() {
             if (myChannels.length === 0) return alert('저장할 목록이 없습니다.');
@@ -212,7 +280,6 @@
             let rawInput = input.value.trim();
             if (!rawInput) return;
 
-            // [수정] 정확한 핸들 추출 로직 (하이픈, 점 포함 / 뒤에오는 경로는 제외)
             let handle = "";
             const handleMatch = rawInput.match(/@([\w.-]+)/);
             if (handleMatch) {
@@ -226,7 +293,6 @@
             if (videoMatch) {
                 apiUrl = `${API_SERVER_URL}/api/find-channel-by-video?videoId=${videoMatch[1]}`;
             } else if (handle) {
-                // 정확히 추출된 핸들(@coin-rich 등)만 사용
                 apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(handle)}`;
             } else if (channelIdMatch) {
                 apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(channelIdMatch[1])}`;
@@ -249,46 +315,39 @@
             } catch (e) { alert(e.message); }
         };
 
+        // [중요] SortableJS 초기화
+        function initSortable() {
+            const el = document.getElementById('channelListWrapper');
+            if(sortableInstance) sortableInstance.destroy();
+
+            sortableInstance = new Sortable(el, {
+                animation: 150,
+                handle: ".drag-handle", // 핸들로만 드래그 가능
+                ghostClass: "sortable-ghost",
+                dragClass: "sortable-drag",
+                onEnd: function (evt) {
+                    const item = myChannels.splice(evt.oldIndex, 1)[0];
+                    myChannels.splice(evt.newIndex, 0, item);
+                    saveToStorage(); // 데이터만 저장 (렌더링은 Sortable이 이미 처리함)
+                }
+            });
+        }
+
+        // [수정] 기본 드래그 이벤트 제거 및 구조 단순화
         function renderChannelList() {
             const wrapper = document.getElementById('channelListWrapper');
             wrapper.innerHTML = myChannels.map((c, i) => `
                 <div class="channel-item ${activeChannelId === c.channelId ? 'active' : ''}" 
-                     draggable="true" 
-                     data-index="${i}"
-                     ondragstart="handleDragStart(event)" 
-                     ondragover="handleDragOver(event)" 
-                     ondragenter="handleDragEnter(event)" 
-                     ondragleave="handleDragLeave(event)" 
-                     ondrop="handleDrop(event)" 
-                     ondragend="handleDragEnd(event)"
-                     onclick="loadVideos('${c.channelId}', '${c.title.replace(/'/g, "\\'")}')">
-                    <div class="channel-header">
+                     data-id="${c.channelId}">
+                    <div class="channel-header" onclick="loadVideos('${c.channelId}', '${c.title.replace(/'/g, "\\'")}')">
                         <i class="fas fa-bars drag-handle" title="Drag to reorder"></i>
                         <img src="${c.thumbnail}" class="channel-icon">
                         <span class="channel-name">${c.title} <span class="video-count-badge">(${c.videoCount || 0})</span></span>
-                        <i class="fas fa-times" style="color:#555; padding:5px;" onclick="removeChannel(event, ${i})"></i>
+                        <i class="fas fa-times" style="color:#555; padding:5px; cursor:pointer;" onclick="removeChannel(event, ${i})"></i>
                     </div>
                 </div>
             `).join('');
         }
-
-        function handleDragStart(e) { dragSrcEl = e.currentTarget; e.dataTransfer.effectAllowed = 'move'; e.currentTarget.classList.add('dragging'); }
-        function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); return false; }
-        function handleDragEnter(e) { e.currentTarget.classList.add('drag-over'); }
-        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-        function handleDrop(e) {
-            if (e.stopPropagation) e.stopPropagation();
-            const target = e.currentTarget;
-            if (dragSrcEl !== target) {
-                const oldIndex = parseInt(dragSrcEl.getAttribute('data-index'));
-                const newIndex = parseInt(target.getAttribute('data-index'));
-                const item = myChannels.splice(oldIndex, 1)[0];
-                myChannels.splice(newIndex, 0, item);
-                saveAndRender();
-            }
-            return false;
-        }
-        function handleDragEnd(e) { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.channel-item').forEach(item => item.classList.remove('drag-over')); }
 
         async function loadVideos(channelId, title, forceRefresh = false) {
             const channel = myChannels.find(c => c.channelId === channelId);
@@ -297,7 +356,7 @@
             activeChannelId = channelId;
             loadingChannelId = channelId; 
             copyIndex = 0; 
-            renderChannelList();
+            renderChannelList(); // 활성 상태 업데이트
 
             document.getElementById('currentTitle').textContent = title;
             const channelUrlDiv = document.getElementById('channelUrl');
@@ -405,7 +464,7 @@
             document.getElementById('channelUrl').textContent = '';
             document.getElementById('headerActions').style.display = 'none';
             document.getElementById('mainClearBtn').style.display = 'none';
-            document.getElementById('videoListContainer').innerHTML = `<div class="empty-state"><i class="fab fa-youtube" style="font-size:3rem"></i><p>채널을 선택하세요.</p></div>`;
+            document.getElementById('videoListContainer').innerHTML = `<div class="empty-state"><i class="fab fa-youtube" style="font-size:3rem; margin-bottom:10px;"></i><p>왼쪽에서 채널을 선택하거나 서버에서 데이터를 불러오세요.</p></div>`;
             document.getElementById('progressContainer').style.display = 'none';
         }
 
