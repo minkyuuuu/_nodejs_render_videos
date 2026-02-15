@@ -30,6 +30,7 @@ app.get('/api/sync-download', (req, res) => {
     res.json({ data: cloudStorageData });
 });
 
+// 공통 함수: ID로 채널 상세 정보 조회
 async function getChannelDetails(channelId) {
     const response = await youtube.channels.list({
         part: 'snippet,statistics,contentDetails',
@@ -43,33 +44,75 @@ async function getChannelDetails(channelId) {
         title: channel.snippet.title,
         thumbnail: channel.snippet.thumbnails.default.url,
         videoCount: parseInt(channel.statistics.videoCount) || 0,
-        uploadsPlaylistId: channel.contentDetails.relatedPlaylists.uploads
+        uploadsPlaylistId: channel.contentDetails.relatedPlaylists?.uploads // 안전한 접근
     };
 }
 
 app.get('/api/find-channel', async (req, res) => {
     let { handle } = req.query;
     try {
-        let channelId = null;
+        let targetChannelId = null;
+
+        // 1. 입력값이 이미 채널 ID(UC...) 형식인지 확인
         if (handle.startsWith('UC') && handle.length > 20) {
-            channelId = handle;
-        } else if (handle.includes('youtube.com/channel/')) {
+            targetChannelId = handle;
+        } 
+        // 2. 입력값이 채널 ID가 포함된 URL인지 확인
+        else if (handle.includes('youtube.com/channel/')) {
             const match = handle.match(/channel\/(UC[a-zA-Z0-9_-]{22})/);
-            if (match) channelId = match[1];
+            if (match) targetChannelId = match[1];
         }
 
-        if (channelId) {
-            const details = await getChannelDetails(channelId);
+        // ID가 바로 식별되었다면 조회 후 리턴
+        if (targetChannelId) {
+            const details = await getChannelDetails(targetChannelId);
             if (details) return res.json(details);
+            // ID로 조회 실패 시 404
+            return res.status(404).json({ error: '해당 ID의 채널을 찾을 수 없습니다.' });
         }
 
-        const search = await youtube.search.list({ part: 'snippet', type: 'channel', q: handle, maxResults: 1 });
-        if (!search.data.items || !search.data.items.length) return res.status(404).json({ error: '채널 없음' });
+        // 3. 핸들(@)인 경우 API를 통해 ID 알아내기 시도
+        if (handle.startsWith('@')) {
+            try {
+                // forHandle로 ID만 빠르게 조회
+                const handleResponse = await youtube.channels.list({
+                    part: 'id',
+                    forHandle: handle
+                });
+                
+                if (handleResponse.data.items && handleResponse.data.items.length > 0) {
+                    targetChannelId = handleResponse.data.items[0].id;
+                }
+            } catch (err) {
+                console.log("Handle search failed, falling back to query search:", err.message);
+                // 에러 발생 시(API 지원 문제 등) 무시하고 아래 검색 로직으로 진행
+            }
+        }
+
+        // 4. 아직 ID를 못 찾았다면 검색(Search) 수행 (Fallback)
+        if (!targetChannelId) {
+            const search = await youtube.search.list({ 
+                part: 'snippet', 
+                type: 'channel', 
+                q: handle, 
+                maxResults: 1 
+            });
+            
+            if (!search.data.items || !search.data.items.length) {
+                return res.status(404).json({ error: '채널을 찾을 수 없습니다.' });
+            }
+            
+            targetChannelId = search.data.items[0].id.channelId;
+        }
+
+        // 5. 최종 확보된 ID로 상세 정보 조회 (중복 처리의 핵심)
+        const details = await getChannelDetails(targetChannelId);
+        if (!details) return res.status(404).json({ error: '채널 상세 정보를 가져올 수 없습니다.' });
         
-        const foundId = search.data.items[0].id.channelId;
-        const details = await getChannelDetails(foundId);
         res.json(details);
+
     } catch (e) { 
+        console.error(e);
         res.status(500).json({ error: '서버 에러: ' + e.message }); 
     }
 });
@@ -88,19 +131,22 @@ app.get('/api/channel-videos', async (req, res) => {
     const { channelId, pageToken } = req.query;
     try {
         const channelInfo = await getChannelDetails(channelId);
-        if (!channelInfo) return res.status(404).json({ error: '채널 정보 없음' });
+        if (!channelInfo || !channelInfo.uploadsPlaylistId) return res.status(404).json({ error: '채널 정보 또는 업로드 목록 없음' });
+        
         const response = await youtube.playlistItems.list({
             part: 'snippet,contentDetails',
             playlistId: channelInfo.uploadsPlaylistId,
             maxResults: 50,
             pageToken: pageToken || null
         });
+        
         const videoItems = response.data.items.map(item => ({
             id: item.contentDetails.videoId,
             title: item.snippet.title,
             thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default.url,
             publishedAt: item.snippet.publishedAt,
         }));
+        
         if (videoItems.length > 0) {
             const ids = videoItems.map(v => v.id).join(',');
             const details = await youtube.videos.list({ part: 'contentDetails', id: ids });
@@ -109,6 +155,7 @@ app.get('/api/channel-videos', async (req, res) => {
                 if (target) target.duration = d.contentDetails.duration;
             });
         }
+        
         res.json({
             videos: videoItems,
             nextPageToken: response.data.nextPageToken || null,
