@@ -56,16 +56,23 @@
             border-right: none;
         }
 
-        .sidebar-header { padding: 20px; background: var(--header-bg); border-bottom: 1px solid var(--border-color); }
-        .sidebar-header h2 { font-size: 1.1rem; margin-bottom: 15px; color: var(--accent-color); display: flex; align-items: center; gap: 8px; }
+        .sidebar-header { padding: 15px; background: var(--header-bg); border-bottom: 1px solid var(--border-color); }
+        .sidebar-header h2 { font-size: 1.1rem; margin-bottom: 10px; color: var(--accent-color); display: flex; align-items: center; gap: 8px; }
         
         .sync-actions { display: flex; gap: 5px; margin-bottom: 15px; }
         .sync-btn { flex: 1; padding: 6px; font-size: 0.75rem; border: 1px solid #444; background: #2d2d2d; color: #aaa; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
         .sync-btn:hover { background: #3e3e42; color: white; }
         
+        /* [수정] 입력 그룹 스타일 개선 */
+        .input-group { margin-bottom: 10px; }
+        .input-label { font-size: 0.75rem; color: #888; margin-bottom: 4px; display: block; }
         .add-channel-box { display: flex; gap: 5px; }
-        .add-channel-box input { flex: 1; padding: 8px; background: #3c3c3c; border: 1px solid #3c3c3c; color: white; border-radius: 4px; outline: none; }
-        .add-channel-box button { padding: 8px 12px; background: #0e639c; border: none; color: white; border-radius: 4px; cursor: pointer; }
+        .add-channel-box input { flex: 1; padding: 8px; background: #3c3c3c; border: 1px solid #3c3c3c; color: white; border-radius: 4px; outline: none; font-size: 0.85rem; }
+        .add-channel-box input:focus { border-color: var(--accent-color); }
+        .add-channel-box button { width: 36px; padding: 0; display: flex; align-items: center; justify-content: center; background: #0e639c; border: none; color: white; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        .add-channel-box button:hover { background: #1177bb; }
+        .add-channel-box button.search-btn { background: #28a745; }
+        .add-channel-box button.search-btn:hover { background: #34c759; }
 
         .channel-list { flex: 1; overflow-y: auto; padding: 10px 0 150px 0; }
         
@@ -160,6 +167,18 @@
         .player-content iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
         .close-btn { background: none; border: none; color: #888; font-size: 2.5rem; cursor: pointer; }
 
+        .search-modal-content { background: var(--sidebar-bg); padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .search-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .search-header h3 { color: var(--text-highlight); font-weight: normal; }
+        .candidate-list { overflow-y: auto; flex: 1; }
+        .candidate-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; }
+        .candidate-item:hover { background: var(--item-hover); }
+        .candidate-item:last-child { border-bottom: none; }
+        .candidate-thumb { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; object-fit: cover; }
+        .candidate-info { flex: 1; min-width: 0; }
+        .candidate-title { font-size: 0.95rem; color: var(--text-highlight); margin-bottom: 4px; font-weight: bold; }
+        .candidate-desc { font-size: 0.8rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
         .empty-state { text-align: center; margin-top: 100px; color: #555; width: 100%; }
         .spinner { width: 40px; height: 40px; border: 3px solid #333; border-top: 3px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -174,10 +193,24 @@
                 <button class="sync-btn" onclick="uploadToServer()" title="서버에 저장"><i class="fas fa-cloud-upload-alt"></i> Save to Cloud</button>
                 <button class="sync-btn" onclick="downloadFromServer()" title="서버에서 불러오기"><i class="fas fa-cloud-download-alt"></i> Load from Cloud</button>
             </div>
-            <div class="add-channel-box">
-                <input type="text" id="channelInput" placeholder="ID, 핸들(@) 또는 URL">
-                <button id="addChannelBtn"><i class="fas fa-plus"></i></button>
+            
+            <!-- [수정] 입력 필드를 2개로 분리 -->
+            <div class="input-group">
+                <span class="input-label">URL / 핸들(@) / ID 추가</span>
+                <div class="add-channel-box">
+                    <input type="text" id="urlInput" placeholder="https://... 또는 @Handle">
+                    <button id="addUrlBtn" title="URL/핸들로 추가"><i class="fas fa-plus"></i></button>
+                </div>
             </div>
+
+            <div class="input-group">
+                <span class="input-label">채널명 검색</span>
+                <div class="add-channel-box">
+                    <input type="text" id="nameInput" placeholder="채널 이름으로 검색">
+                    <button id="searchNameBtn" class="search-btn" title="이름으로 검색"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+
         </div>
         <div class="channel-list" id="channelListWrapper"></div>
     </aside>
@@ -222,9 +255,19 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="searchModal">
+        <div class="search-modal-content">
+            <div class="search-header">
+                <h3><i class="fas fa-search"></i> 검색 결과 선택</h3>
+                <button class="close-btn" style="font-size:1.5rem;" onclick="closeSearchModal()">×</button>
+            </div>
+            <div id="candidateList" class="candidate-list"></div>
+        </div>
+    </div>
+
     <script>
         const API_SERVER_URL = '';
-        let myChannels = []; // 초기값 빈 배열
+        let myChannels = []; 
         let currentVideoList = [];
         let activeChannelId = null;
         let loadingChannelId = null; 
@@ -232,18 +275,14 @@
         let copyIndex = 0;
         let sortableInstance = null;
 
-        // [변경] localForage 설정 (선택사항, 기본값 써도 됨)
         localforage.config({
             name: 'myVideoLibraryApp',
             storeName: 'channel_data'
         });
 
-        // [변경] 비동기로 데이터 로드
         window.onload = async () => {
             try {
-                // localStorage 대신 localforage 사용
                 const stored = await localforage.getItem('myVideos');
-                // localForage는 JSON.parse가 필요 없습니다 (자동 처리)
                 if (stored) {
                     myChannels = stored;
                 } else {
@@ -262,10 +301,8 @@
             sidebar.classList.toggle('collapsed');
         }
 
-        // [변경] 저장 함수 비동기화
         async function saveToStorage() {
             try {
-                // JSON.stringify 불필요
                 await localforage.setItem('myVideos', myChannels);
                 console.log("저장 완료");
             } catch (err) {
@@ -299,34 +336,35 @@
                 const result = await res.json();
                 if (result.error) throw new Error(result.error);
                 myChannels = result.data;
-                await saveAndRender(); // 비동기 대기
+                await saveAndRender(); 
                 alert('데이터를 성공적으로 불러왔습니다!');
             } catch (e) { alert('불러오기 실패: ' + e.message); }
         }
 
-        document.getElementById('addChannelBtn').onclick = async () => {
-            const input = document.getElementById('channelInput');
+        // [수정] 1. URL/핸들/ID 추가 버튼 로직 (엄격한 검증)
+        document.getElementById('addUrlBtn').onclick = async () => {
+            const input = document.getElementById('urlInput');
             let rawInput = input.value.trim();
             if (!rawInput) return;
 
-            let handle = "";
-            const handleMatch = rawInput.match(/@([\w.-]+)/);
-            if (handleMatch) {
-                handle = "@" + handleMatch[1];
-            }
-
             let apiUrl = '';
+            
+            // 패턴 검사
+            const handleMatch = rawInput.match(/@([\w.-]+)/);
             const videoMatch = rawInput.match(/(?:v=|\/embed\/|youtu\.be\/)([^&?#/]+)/);
             const channelIdMatch = rawInput.match(/(?:channel\/|^)(UC[\w-]{21}[AQgw])/);
 
+            // 명시적인 패턴이 없으면 오류 처리 (검색어로 넘어가지 않음)
             if (videoMatch) {
                 apiUrl = `${API_SERVER_URL}/api/find-channel-by-video?videoId=${videoMatch[1]}`;
-            } else if (handle) {
-                apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(handle)}`;
+            } else if (handleMatch) {
+                // @핸들인 경우
+                apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent("@" + handleMatch[1])}`;
             } else if (channelIdMatch) {
+                // UC 아이디인 경우
                 apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(channelIdMatch[1])}`;
             } else {
-                alert("입력하신 정보가 올바른 형식의 핸들(@)이나 URL이 아닙니다.");
+                alert("올바른 URL, 핸들(@), 또는 채널 ID 형식이 아닙니다.\n채널 이름으로 찾으시려면 아래 '채널명 검색'을 이용해주세요.");
                 return;
             }
             
@@ -334,15 +372,91 @@
                 const res = await fetch(apiUrl);
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
-                if (myChannels.some(c => c.channelId === data.channelId)) return alert('이미 추가됨');
-                
-                data.videos = []; 
-                myChannels.push(data);
-                await saveAndRender(); // 비동기 대기
+
+                // URL 입력인데도 여러 결과가 나오면(그럴 리는 적겠지만) 처리
+                if (data.multiple && data.candidates) {
+                    openSearchModal(data.candidates);
+                    return;
+                }
+
+                addChannelData(data);
                 input.value = '';
-                loadVideos(data.channelId, data.title.replace(/'/g, "\\'"));
-            } catch (e) { alert(e.message); }
+            } catch (e) { alert("추가 실패: " + e.message); }
         };
+
+        // [수정] 2. 이름 검색 버튼 로직 (단순 검색)
+        document.getElementById('searchNameBtn').onclick = async () => {
+            const input = document.getElementById('nameInput');
+            let rawInput = input.value.trim();
+            if (!rawInput) return;
+
+            // 정규식 검사 없이 바로 검색 API 호출
+            const apiUrl = `${API_SERVER_URL}/api/find-channel?handle=${encodeURIComponent(rawInput)}`;
+            
+            try {
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                if (data.multiple && data.candidates) {
+                    openSearchModal(data.candidates);
+                    return;
+                }
+
+                // 검색 결과가 1개만 나와서 바로 상세정보가 온 경우
+                addChannelData(data);
+                input.value = '';
+            } catch (e) { alert("검색 실패: " + e.message); }
+        };
+
+        // 엔터키 처리 분리
+        document.getElementById('urlInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('addUrlBtn').click();
+        });
+        document.getElementById('nameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('searchNameBtn').click();
+        });
+
+        async function addChannelData(data) {
+            if (myChannels.some(c => c.channelId === data.channelId)) return alert('이미 추가된 채널입니다.');
+            
+            data.videos = []; 
+            myChannels.push(data);
+            await saveAndRender();
+            loadVideos(data.channelId, data.title.replace(/'/g, "\\'"));
+        }
+
+        function openSearchModal(candidates) {
+            const list = document.getElementById('candidateList');
+            list.innerHTML = candidates.map(c => `
+                <div class="candidate-item" onclick="selectCandidate('${c.channelId}')">
+                    <img src="${c.thumbnail}" class="candidate-thumb">
+                    <div class="candidate-info">
+                        <div class="candidate-title">${c.title}</div>
+                        <div class="candidate-desc">${c.description || '설명 없음'}</div>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('searchModal').classList.add('active');
+        }
+
+        function closeSearchModal() {
+            document.getElementById('searchModal').classList.remove('active');
+        }
+
+        async function selectCandidate(channelId) {
+            closeSearchModal();
+            try {
+                const res = await fetch(`${API_SERVER_URL}/api/find-channel?handle=${channelId}`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                
+                await addChannelData(data);
+                document.getElementById('nameInput').value = ''; // 검색창 비우기
+            } catch (e) {
+                alert("채널 추가 실패: " + e.message);
+            }
+        }
 
         function initSortable() {
             const el = document.getElementById('channelListWrapper');
@@ -356,7 +470,7 @@
                 onEnd: function (evt) {
                     const item = myChannels.splice(evt.oldIndex, 1)[0];
                     myChannels.splice(evt.newIndex, 0, item);
-                    saveToStorage(); // 드래그 앤 드롭 후 저장
+                    saveToStorage(); 
                 }
             });
         }
@@ -428,7 +542,7 @@
                 }
 
                 channel.videos = currentVideoList;
-                await saveToStorage(); // 로딩 후 저장
+                await saveToStorage(); 
                 progressContainer.style.display = 'none';
                 applySortAndRender();
             } catch (e) {
